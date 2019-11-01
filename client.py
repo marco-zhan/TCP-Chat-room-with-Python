@@ -54,7 +54,7 @@ def client_setup(server_ip,server_port):
         for sock in s[0]: 
             if sock == client_socket: 
                 message = sock.recv(2048).decode()
-                if message == '<server> Your session has timed out':
+                if message == '<server> Your session has timed out' or message == '<server> Logout successful':
                     print(message)
                     client_socket.close()
                     exit(1)
