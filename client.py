@@ -27,7 +27,7 @@ def login_client(client_socket):
         client_socket.send(user_info.encode())
         response = client_socket.recv(1024).decode()
         print(response)
-        if response == '<server> Welcome to ZYX chat':
+        if response == '<server> Welcome to ZYX chat\nretrieving offline messages...':
             break
         elif response == '<server> User does not exist':
             client_socket.close()
@@ -51,7 +51,10 @@ def login_client(client_socket):
 def client_setup(server_ip,server_port):
     client_socket = socket(AF_INET, SOCK_STREAM)
     client_socket.connect((server_ip, server_port))
-    login_client(client_socket)
+    try:
+        login_client(client_socket)
+    except BrokenPipeError:
+        print("Your connection has benn closed")
 
     while True:
         incoming_addr = [client_socket,sys.stdin]

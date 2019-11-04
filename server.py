@@ -3,6 +3,7 @@ import sys
 from socket import *
 import threading
 from datetime import datetime 
+import time
 
 client_conn = {}
 all_clients = {}
@@ -11,6 +12,7 @@ online_clients_thread = {}
 client_blocking = {}
 server_blocking = {}
 client_login_history = {}
+offline_messages = {}
 time_out = 0
 block_period = 0
 
@@ -90,6 +92,7 @@ def get_all_clients():
         u_name, u_password = user.split(" ")
         all_clients[u_name] = u_password
         client_blocking[u_name] = []
+        offline_messages[u_name] = []
 
 # broadcase a message to all the users "online" except itself
 # c_conn -> current_connection is used to differentiate itself
@@ -146,7 +149,10 @@ def receiver_handler(conn,received_message):
             return 
         if user_blocked(sender,receiver):
             send_message('server',sender,'Your message could not be delivered as the recipient has blocked you')
-            return 
+            return
+        if not user_online(receiver):
+            offline_messages[receiver].append([sender,message])
+            return
         send_message(sender,receiver,message)
 
     elif command == 'broadcast':
@@ -240,6 +246,20 @@ def is_server_blocking(username):
                 return [True,(int)(block_period - difference)] 
     return [False,0]
 
+def send_offline_message(user_name):
+    global offline_messages
+    m = "Offline messages are shown below"
+    for key in offline_messages:
+        if key == user_name:
+            for message_pair in offline_messages[key]:
+                sender, message = message_pair
+                m = m + '\n' + '<{}> '.format(sender) + message 
+            offline_messages[key] = []
+    if m != "Offline messages are shown below":
+        send_message('server',user_name,m)
+    else:
+        send_message('server',user_name,'You have no offine messages')
+
 # log in user by calling the authentication function
 # act accordingly to the return from authentication
 def login_user(conn):
@@ -262,7 +282,9 @@ def login_user(conn):
         auth_response = authentication(client_name,client_password)
         if (auth_response == 'OK'):
             update_server(client_name,client_password,conn)
-            send_message('server',client_name, 'Welcome to ZYX chat')
+            send_message('server',client_name, 'Welcome to ZYX chat\nretrieving offline messages...')
+            time.sleep(3)
+            send_offline_message(client_name)
             break
         elif (auth_response == 'DUPLICATE'):
             conn.send('<server> User Already logged in'.encode())
