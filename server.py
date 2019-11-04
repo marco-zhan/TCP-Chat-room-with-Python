@@ -8,7 +8,8 @@ client_conn = {}
 all_clients = {}
 online_clients = {}
 online_clients_thread = {}
-blocked_dic = {}
+client_blocking = {}
+server_blocking = {}
 client_login_history = {}
 time_out = 0
 block_period = 0
@@ -22,10 +23,10 @@ def valid_user(user_name):
     return False
 
 def user_blocked(sender,receiver):
-    global blocked_dic
-    for key in blocked_dic:
+    global client_blocking
+    for key in client_blocking:
         if key == receiver:
-            if sender in blocked_dic[key]:
+            if sender in client_blocking[key]:
                 return True 
     return False
 
@@ -88,7 +89,7 @@ def get_all_clients():
             user = user.replace('\n','')
         u_name, u_password = user.split(" ")
         all_clients[u_name] = u_password
-        blocked_dic[u_name] = []
+        client_blocking[u_name] = []
 
 # broadcase a message to all the users "online" except itself
 # c_conn -> current_connection is used to differentiate itself
@@ -125,10 +126,15 @@ def authentication(user_name, user_password):
             return 'OK'
     return 'WRONG_INFO'
 
-            
+def user_exist(user_name):
+    global all_clients
+    for key in all_clients:
+        if key == user_name:
+            return True 
+    return False            
 # handle message received
 def receiver_handler(conn,received_message):
-    global blocked_dic
+    global client_blocking
     message_data = received_message.split(" ")
     command = message_data[0]
     sender = get_user(conn)
@@ -178,7 +184,7 @@ def receiver_handler(conn,received_message):
         if not valid_user(block_target):
             send_message('server',sender,'Invalid user specified')
             return 
-        blocked_dic[sender].append(block_target)
+        client_blocking[sender].append(block_target)
         send_message('server',sender,block_target + ' is blocked')
 
     elif command == 'unblock':
@@ -195,7 +201,7 @@ def receiver_handler(conn,received_message):
         if not user_blocked(unblock_target,sender):
             send_message('server',sender,'Error: ' + unblock_target + ' was not blocked')
             return 
-        blocked_dic[sender].remove(unblock_target)
+        client_blocking[sender].remove(unblock_target)
         send_message('server',sender,unblock_target + ' is unblocked')
 
     elif command == 'logout':
@@ -222,6 +228,18 @@ def update_server(client_name, client_password, connection):
     message = client_name + " has just logged on"
     broadcast('server',message,connection)
 
+def is_server_blocking(username):
+    global server_blocking
+    global block_period
+    for key in server_blocking:
+        if key == username:
+            difference = (datetime.now() - server_blocking[key]).total_seconds()
+            if difference > block_period:
+                return [False,0] 
+            else:
+                return [True,(int)(block_period - difference)] 
+    return [False,0]
+
 # log in user by calling the authentication function
 # act accordingly to the return from authentication
 def login_user(conn):
@@ -231,6 +249,16 @@ def login_user(conn):
     while number_tries < 3:
         client_login = conn.recv(1024).decode()
         client_name, client_password = client_login.split(" ")[:2]
+        if (not user_exist(client_name)):
+            conn.send('<server> User does not exist'.encode())
+            conn.close()
+            break 
+        user_blocked, time_left = is_server_blocking(client_name) 
+        if user_blocked:
+            message = '<server> Your account is blocked due to multiple login failures. Please try again in {} seconds'.format(time_left)
+            conn.send(message.encode())
+            conn.close()
+            break 
         auth_response = authentication(client_name,client_password)
         if (auth_response == 'OK'):
             update_server(client_name,client_password,conn)
@@ -243,9 +271,10 @@ def login_user(conn):
             number_tries += 1
             if (number_tries == 3):
                 conn.send('<server> Invalid Username or Password. Your account has been blocked. Please try again later'.encode())
+                server_blocking[client_name] = datetime.now()
                 conn.close()
             else:
-                conn.send('<server> Invalid Username or Password. Please try again'.encode())
+                conn.send('<server> Invalid Password. Please try again'.encode())
 
 # Create a new thread for client
 # Handle user login by calling login_user

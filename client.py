@@ -20,8 +20,8 @@ def handle_receive(clientSocket):
 
 def login_client(client_socket):
     number_tries = 0
-    while number_tries < 3:
-        user_name = input("Username: ")
+    user_name = input("Username: ")
+    while number_tries < 3: 
         password = input("Password: ")
         user_info = user_name + " " + password
         client_socket.send(user_info.encode())
@@ -29,10 +29,16 @@ def login_client(client_socket):
         print(response)
         if response == '<server> Welcome to ZYX chat':
             break
+        elif response == '<server> User does not exist':
+            client_socket.close()
+            exit(1)
         elif response == '<server> User Already logged in':
             client_socket.close()
             exit(1)
         elif response == '<server> Your session has timed out':
+            client_socket.close()
+            exit(1)
+        elif '<server> Your account is blocked due to multiple login failures' in response:
             client_socket.close()
             exit(1)
         else:
