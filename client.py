@@ -2,9 +2,11 @@ import sys
 from socket import *
 import select
 
-def handle_send(clientSocket):
+incoming_addr = []
+
+def handle_send(client_socket):
     user_input = input()
-    clientSocket.send(user_input.encode())
+    client_socket.send(user_input.encode())
 
 def handle_receive(clientSocket):
     try:
@@ -48,18 +50,38 @@ def login_client(client_socket):
         client_socket.close()
         exit(1)
 
+def start_connection(host,port):
+    sock = socket(AF_INET, SOCK_STREAM)
+    sock.connect((host,int(port)))
+   
+    sock.send("HELLO".encode())
+
 def client_setup(server_ip,server_port):
-    client_socket = socket(AF_INET, SOCK_STREAM)
+    global incoming_addr
+
+    client_socket = socket(AF_INET, SOCK_STREAM) 
+    client_socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+    
     client_socket.connect((server_ip, server_port))
+
+    # my_ip, my_port = client_socket.getsockname()
+    # print(my_ip)
+
+
+    # client_socket.bind((my_ip, my_port))
+
+    incoming_addr.append(client_socket)
+    incoming_addr.append(sys.stdin)
+    
+    
+
     try:
         login_client(client_socket)
     except BrokenPipeError:
         print("Your connection has benn closed")
 
     while True:
-        incoming_addr = [client_socket,sys.stdin]
-        s = select.select(incoming_addr,[],incoming_addr) 
-    
+        s = select.select(incoming_addr,[],incoming_addr)
         for sock in s[0]: 
             if sock == client_socket: 
                 message = sock.recv(2048).decode()
@@ -67,7 +89,21 @@ def client_setup(server_ip,server_port):
                     print(message)
                     client_socket.close()
                     exit(1)
-                print (message) 
+                elif '<server-P2P>' in message:
+                    host,port = message.split(" ")[1:]
+                    try:
+                        start_connection(host,port)
+                    except error as e:
+                        print(e)
+                    # print("Connection successful")
+     
+                else:
+                    print (message)
+
+            # elif sock == p2p_sock:
+            #     conn, addr = sock.accpet()
+            #     message = sock.recv(1024).decode
+            #     print(message)
             else: 
                 handle_send(client_socket)
 

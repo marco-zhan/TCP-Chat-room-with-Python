@@ -134,7 +134,13 @@ def user_exist(user_name):
     for key in all_clients:
         if key == user_name:
             return True 
-    return False            
+    return False     
+
+def get_user_conn(user_name):
+    global client_conn
+    for key in client_conn:
+        if key == user_name:
+            return client_conn[key]
 # handle message received
 def receiver_handler(conn,received_message):
     global client_blocking
@@ -209,6 +215,25 @@ def receiver_handler(conn,received_message):
             return 
         client_blocking[sender].remove(unblock_target)
         send_message('server',sender,unblock_target + ' is unblocked')
+    
+    elif command == 'startprivate':
+        receiver = message_data[1]
+        if sender == receiver:
+            send_message('server',sender,'Cannot establish connection with yourself')
+            return 
+        if not valid_user(receiver):
+            send_message('server',sender,'Invalid user specified')
+            return 
+        if user_blocked(sender,receiver):
+            send_message('server',sender,'Connection could not be established as the recipient has blocked you')
+            return
+        if not user_online(receiver):
+            send_message('server',sender,'Recipient is offline')
+            return
+        host, port = get_user_conn(receiver).getpeername()
+        message = "{} {}".format(host,port)
+        send_message('server-P2P',sender,message) 
+        
 
     elif command == 'logout':
         try:
