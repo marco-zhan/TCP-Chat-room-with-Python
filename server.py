@@ -231,7 +231,7 @@ def receiver_handler(conn,received_message):
             send_message('server',sender,'Recipient is offline')
             return
         host, port = get_user_conn(receiver).getpeername()
-        message = "{} {}".format(host,port)
+        message = "{} {} {}".format(host,port,receiver)
         send_message('server-P2P',sender,message) 
         
 
@@ -356,6 +356,7 @@ def client_thread(conn):
 # setup the server, continuously listen 
 def server_setup(server_port):
     serverSocket = socket(AF_INET, SOCK_STREAM)
+    serverSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
     serverSocket.bind(('localhost', server_port))
     serverSocket.listen(1)
     get_all_clients()
