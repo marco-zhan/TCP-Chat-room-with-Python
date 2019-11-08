@@ -147,9 +147,17 @@ def receiver_handler(conn,received_message):
     message_data = received_message.split(" ")
     command = message_data[0]
     sender = get_user(conn)
-    if command == 'message': 
+    if command == 'message':
+        if len(message_data) < 3:
+            send_message('server',sender,"Usage: message <user> <message>")
+            return
         receiver = message_data[1]
+        if receiver == sender:
+            send_message('server',sender,"Cannot send message to yourself")
+            return
         message = get_whole_message(message_data,'message')
+        if message == '':
+            send_message('server',sender,'Message cannot be none')
         if not valid_user(receiver):
             send_message('server',sender,'Invalid user specified')
             return 
@@ -162,14 +170,25 @@ def receiver_handler(conn,received_message):
         send_message(sender,receiver,message)
 
     elif command == 'broadcast':
+        if len(message_data) < 2:
+            send_message('server',sender,'Usage: broadbast <message>')
+            return
         message = get_whole_message(message_data,'broadcast')
+        if message == '':
+            send_message('server',sender,'Message cannot be none')
         broadcast(sender,message, conn)
     
     elif command == 'whoelse':
+        if len(message_data) != 1:
+            send_message('server',sender,'Usage: whoelse')
+            return
         message = get_online_user(sender)
         send_message('server',sender,message)
     
     elif command == 'whoelsesince':
+        if len(message_data) != 2:
+            send_message('server',sender,'Usage: whoelsesince <time>')
+            return
         since = int(message_data[1])
         message = "online users since " + str(since) + " seconds ago:"
         curr_time = datetime.now()
@@ -186,24 +205,28 @@ def receiver_handler(conn,received_message):
         send_message('server',sender,message)
 
     elif command == 'block':
-        block_target = message_data[1]
         if len(message_data) != 2:
             send_message('server',sender,'Usage: block <user>')
             return
+        block_target = message_data[1]
         if sender == block_target:
             send_message('server',sender,"Cannot block self")
             return 
         if not valid_user(block_target):
             send_message('server',sender,'Invalid user specified')
-            return 
+            return
+        if user_blocked(block_target,sender):
+            send_message('server',sender,block_target + " has already been blocked")
+            return
         client_blocking[sender].append(block_target)
         send_message('server',sender,block_target + ' is blocked')
 
     elif command == 'unblock':
-        unblock_target = message_data[1]
-        if len(message_data) != 2:
+        if len(message_data) != 2 :
             send_message('server',sender,'Usage: unblock <user>')
             return
+        unblock_target = message_data[1]
+
         if sender == unblock_target:
             send_message('server',sender,"Cannot unblock self")
             return
@@ -211,15 +234,18 @@ def receiver_handler(conn,received_message):
             send_message('server',sender,'Invalid user specified')
             return 
         if not user_blocked(unblock_target,sender):
-            send_message('server',sender,'Error: ' + unblock_target + ' was not blocked')
+            send_message('server',sender,unblock_target + ' was not blocked')
             return 
         client_blocking[sender].remove(unblock_target)
         send_message('server',sender,unblock_target + ' is unblocked')
     
     elif command == 'startprivate':
+        if len(message_data) != 2:
+            send_message('server',sender,'Usage: startprivate <user>')
+            return
         receiver = message_data[1]
         if sender == receiver:
-            send_message('server',sender,'Cannot establish connection with yourself')
+            send_message('server',sender,'Cannot establish connection with self')
             return 
         if not valid_user(receiver):
             send_message('server',sender,'Invalid user specified')
@@ -236,6 +262,9 @@ def receiver_handler(conn,received_message):
         
 
     elif command == 'logout':
+        if len(message_data) != 1 :
+            send_message('server',sender,'Usage: logout')
+            return
         try:
             send_message('server',sender,'Logout successful')
             conn.shutdown(SHUT_RDWR)

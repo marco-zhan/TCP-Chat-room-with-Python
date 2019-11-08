@@ -58,26 +58,29 @@ def handle_send(client_socket):
     command = message_data[0]
     if command == 'private':
         if len(message_data) < 3:
-            print("Wrong command format")
+            print("<private> Usage: private <user> <message>")
             return
         receiver = message_data[1]
         message = get_whole_message(message_data)
         if not have_conn(receiver):
-            print("Connection to",receiver,"has not been setup")
+            print("<private> Connection to <{}>has not been setup".format(receiver))
             return
         if not user_online(receiver):
-            print(receiver, " is offline")
+            print('<private>',receiver,"is offline")
             return
 
         m = "<private> <{}> {}".format(my_name,message)
         peer_out_conns[receiver].send(m.encode())
         return
     elif command == 'stopprivate':
+        if len(message_data) != 2:
+            print("<private> Usage: stopprivate <user>")
+            return
         receiver = message_data[1]
         if not have_conn(receiver):
-            print("You have no connection with " + receiver)
+            print("<private> You have no connection with " + receiver)
         close_conn(receiver)
-        print("Connection to",receiver,"has been closed")
+        print("<private> Connection to <{}> has been closed".format(receiver))
         return 
 
     client_socket.send(user_input.encode())
@@ -182,7 +185,7 @@ def client_setup(server_ip,server_port):
                     online_status[to_who] = True
                     try:
                         start_connection(host,port,to_who)
-                        print("<private> Private connection to",to_who,"has been setup")
+                        print("<private> Private connection to <{}> has been setup".format(to_who))
                     except error as e:
                         print(e)                    
                 else:
@@ -205,10 +208,10 @@ def client_setup(server_ip,server_port):
 
                 from_who = get_conn_name(sock)
                 if message == '':
-                    message = '<private> Private connection to ' + from_who + ' has been closed'
+                    message = '<private> Private connection to <{}> has been closed'.format(from_who)
                     sock.close()
                     incoming_addr.remove(sock)
-                elif message == '<private> Private connection to ' + from_who + ' has been closed':
+                elif message == '<private> Private connection to <{}> has been closed'.format(from_who):
                     sock.close()
                     incoming_addr.remove(sock)
 
