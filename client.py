@@ -4,16 +4,35 @@ import select
 
 incoming_addr = []
 outgoing_addr = []
-peer_conns = {}
+peer_in_conns = {}
+peer_out_conns = {}
 online_status = {}
 my_name = None
 
 def have_conn(user_name):
-    global peer_conns
-    for key in peer_conns:
+    global peer_out_conns
+    for key in peer_out_conns:
         if key == user_name:
             return True
     return False
+
+def close_conn(user_name):
+    global peer_out_conns
+    global my_name
+    k = None
+    for key in peer_out_conns:
+        if key == user_name:
+            mesage = "<private> Private connection to {} has been closed".format(my_name)
+            peer_out_conns[key].send(mesage.encode())
+            peer_out_conns[key].close()
+            k = key
+    del peer_out_conns[k]
+
+def get_conn_name(conn):
+    global peer_in_conns
+    for key in peer_in_conns:
+        if peer_in_conns[key] == conn:
+            return key
 
 def get_whole_message(message_data):
     message = ""
@@ -32,7 +51,7 @@ def user_online(user_name):
     return False
 
 def handle_send(client_socket):
-    global peer_conns
+    global peer_out_conns
     global my_name
     user_input = input()
     message_data = user_input.split(" ")
@@ -44,15 +63,23 @@ def handle_send(client_socket):
         receiver = message_data[1]
         message = get_whole_message(message_data)
         if not have_conn(receiver):
-            print("Connection to ",receiver," has not been setup")
+            print("Connection to",receiver,"has not been setup")
             return
         if not user_online(receiver):
             print(receiver, " is offline")
             return
 
         m = "<private> <{}> {}".format(my_name,message)
-        peer_conns[receiver].send(m.encode())
+        peer_out_conns[receiver].send(m.encode())
         return
+    elif command == 'stopprivate':
+        receiver = message_data[1]
+        if not have_conn(receiver):
+            print("You have no connection with " + receiver)
+        close_conn(receiver)
+        print("Connection to",receiver,"has been closed")
+        return 
+
     client_socket.send(user_input.encode())
 
 
@@ -89,15 +116,19 @@ def login_client(client_socket):
         exit(1)
 
 def start_connection(host,port,to_who):
-    global peer_conns
+    global peer_out_conns
+    global my_name 
     sock = socket(AF_INET, SOCK_STREAM)
     sock.connect((host,int(port)))
-    peer_conns[to_who] = sock
+    peer_out_conns[to_who] = sock
+    sock.send(my_name.encode())
 
 def client_setup(server_ip,server_port):
     global incoming_addr
     global outgoing_addr
     global online_status
+    global peer_in_conns
+    global peer_out_conns
 
     client_socket = socket(AF_INET, SOCK_STREAM) 
     client_socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
@@ -131,6 +162,7 @@ def client_setup(server_ip,server_port):
                 if message == '<server> Your session has timed out' or message == '<server> Logout successful':
                     print(message)
                     client_socket.close()
+                    p2p_socket.close()
                     exit(1)
                 
                 elif from_who == '<server>' and 'has logged out' in message:
@@ -147,9 +179,10 @@ def client_setup(server_ip,server_port):
 
                 elif from_who == '<server-P2P>':
                     host,port,to_who = message.split(" ")[1:]
+                    online_status[to_who] = True
                     try:
                         start_connection(host,port,to_who)
-                        print("You are connected to " + to_who)
+                        print("<private> Private connection to",to_who,"has been setup")
                     except error as e:
                         print(e)                    
                 else:
@@ -157,13 +190,28 @@ def client_setup(server_ip,server_port):
 
             elif sock == p2p_socket:
                 conn, addr = sock.accept()
+                from_who = conn.recv(2048).decode()
+                peer_in_conns[from_who] = conn
                 incoming_addr.append(conn)
                
             elif sock == sys.stdin: 
                 handle_send(client_socket)
             
             else:
-                message = sock.recv(1024).decode()
+                try:
+                    message = sock.recv(1024).decode()
+                except:
+                    pass
+
+                from_who = get_conn_name(sock)
+                if message == '':
+                    message = '<private> Private connection to ' + from_who + ' has been closed'
+                    sock.close()
+                    incoming_addr.remove(sock)
+                elif message == '<private> Private connection to ' + from_who + ' has been closed':
+                    sock.close()
+                    incoming_addr.remove(sock)
+
                 print(message)
 
 
