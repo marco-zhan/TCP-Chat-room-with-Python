@@ -471,6 +471,9 @@ def client_thread(conn):
             received_message = conn.recv(1024).decode()
             if (received_message == ''):
                 raise RuntimeError("Sockets connection broken")
+
+            # pass received message to receive_handler
+            receiver_handler(conn,received_message)
             
                 
         except timeout: # user timeout 
@@ -500,8 +503,7 @@ def client_thread(conn):
         except OSError:
             pass
         
-        # pass received message to receive_handler
-        receiver_handler(conn,received_message)
+       
 
 # setup the server, continuously listen 
 def server_setup(server_port):
