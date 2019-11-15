@@ -452,6 +452,7 @@ def client_thread(conn):
         login_user(conn)
     except timeout: # if user timeout in login
         conn.send('<server> Your session has timed out'.encode())
+        user = get_user(conn)
         message = "{} has logged out".format(user)
         broadcast('server',message,conn)
         conn.shutdown(SHUT_RDWR)
@@ -461,8 +462,9 @@ def client_thread(conn):
     while True:
         try:
             received_message = conn.recv(1024).decode()
-            receiver_handler(conn,received_message)
-        
+            if (received_message == ''):
+                raise RuntimeError("Sockets connection broken")
+                
         except timeout: # user timeout 
             conn.send('<server> Your session has timed out'.encode())
             user = get_user(conn)
@@ -475,6 +477,9 @@ def client_thread(conn):
             conn.close()
             break
 
+        except RuntimeError:
+            pass 
+            
         except OSError:
             pass
 
