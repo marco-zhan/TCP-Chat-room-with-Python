@@ -25,7 +25,7 @@ def close_conn(user_name):
     k = None
     for key in peer_out_conns:
         if key == user_name:
-            mesage = "<private> Private connection to {} has been closed".format(my_name)
+            mesage = "<private> Private connection to <{}> has been closed".format(my_name)
             peer_out_conns[key].send(mesage.encode())
             peer_out_conns[key].close()
             k = key
