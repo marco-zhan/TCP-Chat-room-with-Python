@@ -402,8 +402,16 @@ def login_user(conn):
     number_tries = 0 # count number of tries 
 
     while number_tries < 3:
+        try:
+            client_login = conn.recv(1024).decode() # Get the login info from client
+            if client_login == '': # Connection lost
+                raise RuntimeError("Socket connection lost")
 
-        client_login = conn.recv(1024).decode() # Get the login info from client
+        except RuntimeError: # catch connection lost, close socket
+            conn.shutdown(SHUT_RDWR)
+            conn.close()
+            break
+
         client_name, client_password = client_login.split(" ")[:2] # Assue client message contain user_name password
         
         if (not valid_user(client_name)): # Client name is invalid, break out
@@ -464,6 +472,7 @@ def client_thread(conn):
             received_message = conn.recv(1024).decode()
             if (received_message == ''):
                 raise RuntimeError("Sockets connection broken")
+            receiver_handler(conn,received_message)
                 
         except timeout: # user timeout 
             conn.send('<server> Your session has timed out'.encode())
@@ -488,6 +497,7 @@ def client_thread(conn):
             conn.shutdown(SHUT_RDWR)
             conn.close()
             break
+
         except OSError:
             pass
 
