@@ -278,7 +278,7 @@ def client_setup(server_ip,server_port):
             else:   # this is some sockets connected to different clients 
                 try:
                     message = sock.recv(1024).decode()
-                    if message = '':
+                    if message == '':
                         raise RuntimeError("Socket connection to peer lost")
                 except RuntimeError:
                     sock.close()
