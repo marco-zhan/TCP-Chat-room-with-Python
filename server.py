@@ -479,7 +479,7 @@ def client_thread(conn):
 
         except RuntimeError:
             pass 
-            
+
         except OSError:
             pass
 
@@ -487,7 +487,7 @@ def client_thread(conn):
 def server_setup(server_port):
     serverSocket = socket(AF_INET, SOCK_STREAM)
     serverSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-    serverSocket.bind(('localhost', server_port))
+    serverSocket.bind(('192.168.0.9', server_port))
     serverSocket.listen(1)
     get_all_clients()
 
