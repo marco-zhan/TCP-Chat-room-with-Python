@@ -289,9 +289,11 @@ def client_setup(server_ip,server_port):
                 if  message == '<private> Private connection to <{}> has been closed'.format(from_who):
                     sock.close()
                     incoming_addr.remove(sock)
+                    print(message)
 
-                # print message received from these p2p connections
-                print(message)
+                else:
+                    # print message received from these p2p connections
+                    print(message)
 
 
 if __name__ == "__main__" :
