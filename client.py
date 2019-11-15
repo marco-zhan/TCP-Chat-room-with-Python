@@ -75,7 +75,10 @@ def handle_send(client_socket):
             print("<private> Usage: private <user> <message>")
             return
         receiver = message_data[1]
-       
+
+        if receiver == my_name:
+            print("<private> Cannot private self")
+            return
         if not have_conn(receiver):
             print("<private> Connection to <{}>has not been setup".format(receiver))
             return
