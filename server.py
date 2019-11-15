@@ -336,8 +336,14 @@ def receiver_handler(conn,received_message):
             send_message('server',sender,'Usage: logout')
             return
         try:
-            logout_user(conn,'L')
-
+            send_message('server',sender,'Logout successful') # send logout message to client
+            conn.shutdown(SHUT_RDWR)
+            conn.close()
+            del online_clients[sender] # set user offline
+            del client_conn[sender] # Delete user connection
+            client_login_history[sender] = datetime.now()
+            message = "{} has logged out".format(sender)
+            broadcast('server',message,conn) # broadcast to all other online users
         except Exception:
             send_message('server',sender, 'Server error, please try again')
     
@@ -435,21 +441,6 @@ def login_user(conn):
             else:
                 conn.send('<server> Invalid Password. Please try again'.encode())
 
-def logout_user(conn,reason):
-    user = get_user(conn)
-    if reason == 'TO':
-        send_message('server',user, 'Your session has timed out')
-    elif reason == 'L':
-        send_message('server',user,'Logout successful') # send logout message to client
-    
-    message = "{} has logged out".format(user)
-    broadcast('server',message,conn)
-    del online_clients[user]
-    del client_conn[user]
-    client_login_history[user] = datetime.now()
-    conn.shutdown(SHUT_RDWR)
-    conn.close()
-    
 # Pass in a user connection
 # Create a new thread for client
 # Handle user login by calling login_user
@@ -475,13 +466,28 @@ def client_thread(conn):
                 raise RuntimeError("Sockets connection broken")
                 
         except timeout: # user timeout 
-            logout_user(conn,'TO')
+            conn.send('<server> Your session has timed out'.encode())
+            user = get_user(conn)
+            message = "{} has logged out".format(user)
+            broadcast('server',message,conn)
+            del online_clients[user]
+            del client_conn[user]
+            client_login_history[user] = datetime.now()
+            conn.shutdown(SHUT_RDWR)
+            conn.close()
             break
 
-        except RuntimeError: # connection to user lost
-            logout_user(conn,'CL')
+        except RuntimeError:
+            conn.send('<server> Lost connection to server'.encode())
+            user = get_user(conn)
+            message = "{} has logged out".format(user)
+            broadcast('server',message,conn)
+            del online_clients[user]
+            del client_conn[user]
+            client_login_history[user] = datetime.now()
+            conn.shutdown(SHUT_RDWR)
+            conn.close()
             break
-
         except OSError:
             pass
 
