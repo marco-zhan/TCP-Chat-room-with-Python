@@ -148,7 +148,6 @@ def login_client(client_socket):
 
     if (number_tries == 3):
         client_socket.close()
-        p2p_socket.close()
         exit(1)
 
 # Pass in the target client's host, port and user_name
