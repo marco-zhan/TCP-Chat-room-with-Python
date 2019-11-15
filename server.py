@@ -337,7 +337,7 @@ def receiver_handler(conn,received_message):
             return
         try:
             logout_user(conn,'L')
-            
+
         except Exception:
             send_message('server',sender, 'Server error, please try again')
     
@@ -440,7 +440,7 @@ def logout_user(conn,reason):
     if reason == 'TO':
         send_message('server',user, 'Your session has timed out')
     elif reason == 'L':
-        send_message('server',sender,'Logout successful') # send logout message to client
+        send_message('server',user,'Logout successful') # send logout message to client
     
     message = "{} has logged out".format(user)
     broadcast('server',message,conn)
