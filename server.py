@@ -362,6 +362,8 @@ def client_thread(conn):
         login_user(conn)
     except timeout:
         conn.send('<server> Your session has timed out'.encode())
+        message = "{} has logged out".format(user)
+        broadcast('server',message,conn)
         conn.shutdown(SHUT_RDWR)
         conn.close()
         return
@@ -373,6 +375,8 @@ def client_thread(conn):
         except timeout:
             conn.send('<server> Your session has timed out'.encode())
             user = get_user(conn)
+            message = "{} has logged out".format(user)
+            broadcast('server',message,conn)
             del online_clients[user]
             del client_conn[user]
             client_login_history[user] = datetime.now()
