@@ -8,13 +8,12 @@ import time
 client_conn = {} # dictionary records all clients connections in server, format: {user_name: user_conn}
 all_clients = {} # dictionary records all clients registered in server, format: {user_name: user_password}
 online_clients = {} # dictionary records user online status, format: {user_name: user_password}
-online_clients_thread = {}
 client_blocking = {} # dictionary records the blocking status, format: {user: ["all users the key user blocked"]}
-server_blocking = {}
-client_login_history = {}
-offline_messages = {}
-time_out = 0
-block_period = 0
+server_blocking = {} # dictionary records the server blocking status, format: {user: last_time blocked by server}
+client_login_history = {} # dictionary records client last login time, format: {user: last_time user logged in}
+offline_messages = {} # dictionary records all offline messages, format: {user: a list of [sender,message]}
+time_out = 0    # global time_out variable
+block_period = 0 # global block_period
 
 
 # Pass in a user_name to this function
@@ -472,7 +471,7 @@ def client_thread(conn):
             received_message = conn.recv(1024).decode()
             if (received_message == ''):
                 raise RuntimeError("Sockets connection broken")
-            receiver_handler(conn,received_message)
+            
                 
         except timeout: # user timeout 
             conn.send('<server> Your session has timed out'.encode())
@@ -500,6 +499,9 @@ def client_thread(conn):
 
         except OSError:
             pass
+        
+        # pass received message to receive_handler
+        receiver_handler(conn,received_message)
 
 # setup the server, continuously listen 
 def server_setup(server_port):
@@ -524,6 +526,7 @@ if __name__ == "__main__":
         print("Usage: {} server_port block_duration timeout".format(sys.argv[0]))
         exit(1)
 
+    # get variable from command line
     server_port = int(sys.argv[1])
     time_out = int(sys.argv[2])
     block_period = int(sys.argv[3])
