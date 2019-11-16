@@ -82,13 +82,12 @@ def handle_send(client_socket):
         if not have_conn(receiver):
             print("<private> Connection to <{}> has not been setup".format(receiver))
             return
-        if not user_online(receiver):
-            print('<private>',receiver,"is offline")
-            print('<private> Shutting down connection with',receiver)
-            peer_out_conns[receiver].close
-            peer_out_conns[receiver].shutdown(SHUT_RDWR)
-            del peer_out_conns[receiver]
-            return
+        # if not user_online(receiver):
+        #     print('<private>',receiver,"is offline")
+        #     print('<private> Shutting down connection with <{}> ......'.format(receiver))
+        #     peer_out_conns[receiver].close
+        #     del peer_out_conns[receiver]
+        #     return
 
         # get all the message into a string
         message = get_whole_message(message_data)
@@ -240,7 +239,10 @@ def client_setup(server_ip,server_port):
                     who = message_data[1] # this position is the user_name send from server
                     online_status[who] = False
                     print(message)
-                
+                    print('<private> Shutting down connection with <{}> ......'.format(receiver))
+                    peer_out_conns[receiver].close()
+                    del peer_out_conns[receiver]
+                      
                 # handle log on message from server
                 # update client's online status dictionary about this user
                 elif from_who == '<server>' and 'has just logged on' in message:
