@@ -80,7 +80,7 @@ def handle_send(client_socket):
             print("<private> Cannot private self")
             return
         if not have_conn(receiver):
-            print("<private> Connection to <{}>has not been setup".format(receiver))
+            print("<private> Connection to <{}> has not been setup".format(receiver))
             return
         if not user_online(receiver):
             print('<private>',receiver,"is offline")
