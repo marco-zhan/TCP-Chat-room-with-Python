@@ -84,6 +84,10 @@ def handle_send(client_socket):
             return
         if not user_online(receiver):
             print('<private>',receiver,"is offline")
+            print('<private> Shutting down connection with',receiver)
+            peer_out_conns[receiver].close
+            peer_out_conns[receiver].shutdown(SHUT_RDWR)
+            del peer_out_conns[receiver]
             return
 
         # get all the message into a string
