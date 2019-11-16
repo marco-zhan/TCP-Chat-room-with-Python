@@ -442,7 +442,8 @@ def login_user(conn):
         else: # Wrong password
             number_tries += 1
             if (number_tries == 3):
-                conn.send('<server> Invalid Username or Password. Your account has been blocked. Please try again later'.encode())
+                message = '<server> Invalid Username or Password. Your account has been blocked. Please try again in {} seconds'.format(block_period)
+                conn.send(message.encode())
                 server_blocking[client_name] = datetime.now()
                 conn.close()
             else:

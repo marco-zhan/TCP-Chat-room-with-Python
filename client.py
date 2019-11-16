@@ -239,9 +239,10 @@ def client_setup(server_ip,server_port):
                     who = message_data[1] # this position is the user_name send from server
                     online_status[who] = False
                     print(message)
-                    print('<private> Shutting down connection with <{}> ......'.format(who))
-                    peer_out_conns[who].close()
-                    del peer_out_conns[who]
+                    if have_conn(who):
+                        print('<private> Private connection to <{}> has been shutted down'.format(who))
+                        peer_out_conns[who].close()
+                        del peer_out_conns[who]
                       
                 # handle log on message from server
                 # update client's online status dictionary about this user
