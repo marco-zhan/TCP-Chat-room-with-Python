@@ -94,7 +94,12 @@ def handle_send(client_socket):
 
         m = "<private> <{}> {}".format(my_name,message)
         # send private message to peer
-        peer_out_conns[receiver].send(m.encode())
+        try:
+            sent = peer_out_conns[receiver].send(m.encode())
+            if sent == 0:
+                raise RuntimeError("Socket connection lost")
+        except RuntimeError:
+            peer_out_conns[receiver].close()
         return
 
     # if command is stopprivate
@@ -121,7 +126,16 @@ def login_client(client_socket):
     while number_tries < 3: 
         password = input("Password: ")
         user_info = user_name + " " + password
-        client_socket.send(user_info.encode())
+        try:
+            sent = client_socket.send(user_info.encode())
+            if sent == 0:
+                raise RuntimeErro("Connection to server lost")
+        except RuntimeError:
+            client_socket.close()
+            p2p_socket.close()
+            print("Connection to server lost, please restart program")
+            print("Shutting down ......")
+            exit(1)
         try:
             response = client_socket.recv(1024).decode()
             if response == '':

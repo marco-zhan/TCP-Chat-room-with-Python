@@ -60,9 +60,13 @@ def send_message(sender,receiver, message):
         if key == receiver:
             m = "<{}> {}".format(sender,message)
             try:
-                client_conn[key].send(m.encode())
+                sent = client_conn[key].send(m.encode())
+                if sent == 0: # 0 bytes sent
+                    raise RuntimeError("Socket connection lost")
             except KeyError:
                 pass
+            except RuntimeError:
+                client_conn[key].close()
 
 # Pass in the message data (a list of strings) and command type (message or broadcast)
 # Convert this list of message strings to a single string
@@ -131,9 +135,11 @@ def broadcast(sender,message,c_conn):
             if not user_blocked(sender,receiver):
                 try:
                     new_message = '<{}> {}'.format(sender,message)
-                    client_conn[key].send(new_message.encode())
-                except:
-                    pass
+                    sent = client_conn[key].send(new_message.encode())
+                    if sent == 0:
+                        raise RuntimeError("Socket connection lost")
+                except RuntimeError:
+                    client_conn[key].close()
             else :
                 flag = True
     if flag:
