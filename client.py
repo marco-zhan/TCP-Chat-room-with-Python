@@ -102,6 +102,7 @@ def handle_send(client_socket):
         receiver = message_data[1]
         if not have_conn(receiver):
             print("<private> You haven't setup a connection with " + receiver)
+            return
         close_conn(receiver)
         print("<private> Connection to <{}> has been closed".format(receiver))
         return 
