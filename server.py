@@ -12,6 +12,8 @@ client_blocking = {} # dictionary records the blocking status, format: {user: ["
 server_blocking = {} # dictionary records the server blocking status, format: {user: last_time blocked by server}
 client_login_history = {} # dictionary records client last login time, format: {user: last_time user logged in}
 offline_messages = {} # dictionary records all offline messages, format: {user: a list of [sender,message]}
+registered_file = {} # a dictionary of all registered file in server, format: {user: [chunk_size,numb_chunks]}
+client_registered_chunk = {} # dictionary records client's registered file chunks, format: {user: [file_name,[register_chunks]]}
 time_out = 0    # global time_out variable
 block_period = 0 # global block_period
 
@@ -144,6 +146,60 @@ def broadcast(sender,message,c_conn):
                 flag = True
     if flag:
         send_message('server',sender,'Your message could not be delivered to some recipients')
+
+# Pass in a file name
+# Check if this file is already registered in the server
+def file_registered(file_name):
+    global registered_file
+    for key in registered_file:
+        if key == file_name:
+            return True 
+    return False
+
+# Pass in a file name
+# Return all the users' availability on this file
+def get_client_has_chunks(file_name):
+    message = '[{}] is available, all online users who has some chunks of this file is shown below'.format(file_name)
+    global client_registered_chunk
+    for key in client_registered_chunk:
+        if key == file_name:
+            for inner_key in client_registered_chunk[key]:
+                if user_online(inner_key):
+                    who = '\n<{}> [ '.format(inner_key)
+                    message = message + who
+                    for i in client_registered_chunk[key][inner_key]:
+                        message = message + str(i) + ' '
+                    message = message + ']'
+            return message
+    return '[{}] is available, but none of the users have this file is online'
+
+def get_client_has_requested_chunks(file_name,requested_chunks):
+    print(requested_chunks)
+    message = '[{}] is available, all online users who has some chunks of this file is shown below'.format(file_name)
+    global client_registered_chunk
+    for key in client_registered_chunk:
+        if key == file_name:
+            for inner_key in client_registered_chunk[key]:
+                if user_online(inner_key):
+                    who = '\n<{}> [ '.format(inner_key)
+                    message = message + who
+                    for i in client_registered_chunk[key][inner_key]:
+                        if i in requested_chunks:
+                            message = message + str(i) + ' '
+                    message = message + ']'
+            return message
+    return '[{}] is available, but none of the users have this file is online'
+
+def get_client_list_has_chunks(file_name,chunk_num,my_name):
+    l = [] 
+    global client_registered_chunk
+    for key in client_registered_chunk:
+        if key == file_name:
+            for inner_key in client_registered_chunk[key]:
+                if user_online(inner_key) and inner_key != my_name:
+                    if chunk_num in client_registered_chunk[key][inner_key]:
+                        l.append(inner_key)
+            return l
 
 # Pass in a user name and users password
 # Check if a user is in the cridentials and if their password matches with user_name
@@ -352,6 +408,76 @@ def receiver_handler(conn,received_message):
         except Exception:
             send_message('server',sender, 'Server error, please try again')
     
+    # if command is "register"
+    # format: register <filename> <number_of_chunks>
+    elif command == 'register':
+        file_name, num_chunks, chunk_size = message_data[1:]
+        try:
+            num_chunks = int(num_chunks)
+        except ValueError: # if time is not a number
+            send_message('server',sender,'Usage: register <file_name> <num_chunks(int)>')
+            return
+        if file_registered(file_name):
+            message = 'File [{}] has already been registered'.format(file_name)
+            send_message('server',sender,message)
+            return
+        registered_file[file_name] = [chunk_size,num_chunks]
+        client_registered_chunk[file_name] = {}
+        client_registered_chunk[file_name][sender] = []
+        for i in range (0,num_chunks):
+            client_registered_chunk[file_name][sender].append(i)
+        
+        message = 'File [{}] has been successfully registered'.format(file_name)
+        send_message('server',sender,message)
+    
+    # if command is "searchFile"
+    elif command == 'searchFile':
+        if len(message_data) != 2:
+            send_message('server',sender,'Usage: searchFile <file_name>')
+            return
+        file_name = message_data[1]
+        # if file is not available in server
+        if not file_registered(file_name):
+            message = 'File [{}] has not yet been registered'.format(file_name)
+            send_message('server',sender,message)
+            return
+        message = get_client_has_chunks(file_name)
+        send_message('server',sender,message)
+
+    elif command == 'searchChunk':
+        if len(message_data) < 3:
+            send_message('server',sender,'Usage: searchChunk <file_name> <chunks>')
+            return
+        file_name = message_data[1]
+        # if file is not available in server
+        if not file_registered(file_name):
+            message = 'File [{}] has not yet been registered'.format(file_name)
+            send_message('server',sender,message)
+            return
+        requested_chunks = []
+        for i in range(2,len(message_data)):
+            requested_chunks.append(int(message_data[i]))
+        message = get_client_has_requested_chunks(file_name,requested_chunks)
+        send_message('server',sender,message)
+    
+    elif command == 'download':
+        if len(message_data) != 2:
+            send_message('server',sender,'Usage: download <file_name>')
+            return
+        file_name = message_data[1]
+        if not file_registered(file_name):
+            message = 'File [{}] has not yet been registered'.format(file_name)
+            send_message('server',sender,message)
+            return
+        chunks = [0,1,2,3,4,5,6,7,8,9]
+        
+        for i in chunks:
+            l = get_client_list_has_chunks(file_name,i,sender)
+            host, port = get_user_conn(l[0]).getpeername() # get users host and port
+            message = "{} {} {} {} {}".format(host,port,l[0],file_name,i)
+            send_message('server-P2P-file',sender,message)
+            time.sleep(1)
+        
     # Wrong command format
     else:
         send_message('server',sender, 'Wrong command format')
@@ -498,10 +624,14 @@ def client_thread(conn):
         except RuntimeError:
             conn.send('<server> Lost connection to server'.encode())
             user = get_user(conn)
-            message = "{} has logged out".format(user)
-            broadcast('server',message,conn)
-            del online_clients[user]
-            del client_conn[user]
+            if user != None:
+                message = "{} has logged out".format(user)
+                broadcast('server',message,conn)
+            try:
+                del online_clients[user]
+                del client_conn[user]
+            except KeyError:
+                pass 
             client_login_history[user] = datetime.now()
             conn.shutdown(SHUT_RDWR)
             conn.close()

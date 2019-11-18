@@ -139,10 +139,9 @@ def login_client(client_socket):
         try:
             sent = client_socket.send(user_info.encode())
             if sent == 0:
-                raise RuntimeErro("Connection to server lost")
+                raise RuntimeError("Connection to server lost")
         except RuntimeError:
             client_socket.close()
-            p2p_socket.close()
             print("Connection to server lost, please restart program")
             print("Shutting down ......")
             exit(1)
@@ -152,7 +151,6 @@ def login_client(client_socket):
                 raise RuntimeError("Connection to server lost")
         except RuntimeError:
             client_socket.close()
-            p2p_socket.close()
             print("Connection to server lost, please restart program")
             print("Shutting down ......")
             exit(1)
@@ -197,7 +195,6 @@ def start_private_connection(host,port,to_who):
 # Set up the client
 def client_setup(server_ip,server_port):
     global incoming_addr
-    global outgoing_addr
     global online_status
     global peer_in_conns
     global peer_out_conns
