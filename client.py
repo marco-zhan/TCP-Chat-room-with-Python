@@ -301,8 +301,8 @@ def client_setup(server_ip,server_port):
                             print(e)
                     else:
                         print("<private> Private connection to <{}> has already been setup".format(to_who))
-                    message = '<request> {} {}'.format(file_name, chunk_num).encode()
-                    peer_out_conns[to_who].send(message)
+                    message = '<request> {} {}'.format(file_name, chunk_num)
+                    peer_out_conns[to_who].send(message.encode())
 
                 # other normal messages just print
                 else:
