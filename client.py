@@ -1,6 +1,8 @@
 import sys
 from socket import *
 import select
+import os
+import math
 
 incoming_addr = []
 peer_in_conns = {}
@@ -45,7 +47,7 @@ def get_conn_name(conn):
 def get_whole_message(message_data):
     message = ""
     for i in range(2,len(message_data)):
-        if i == 2: 
+        if i == 2:
             message = message + message_data[i]
         else:
             message = message + " " + message_data[i]
@@ -82,12 +84,6 @@ def handle_send(client_socket):
         if not have_conn(receiver):
             print("<private> Connection to <{}> has not been setup".format(receiver))
             return
-        # if not user_online(receiver):
-        #     print('<private>',receiver,"is offline")
-        #     print('<private> Shutting down connection with <{}> ......'.format(receiver))
-        #     peer_out_conns[receiver].close
-        #     del peer_out_conns[receiver]
-        #     return
 
         # get all the message into a string
         message = get_whole_message(message_data)
@@ -113,7 +109,21 @@ def handle_send(client_socket):
             return
         close_conn(receiver)
         print("<private> Connection to <{}> has been closed".format(receiver))
-        return 
+        return
+
+    elif command == 'register':
+        if len(message_data) != 3:
+            print("<server> Usage: register <filename> <num_chunks>")
+            return
+        file_name, num_chunks = message_data[1:]
+        try:
+            num_chunks = int(num_chunks)
+        except ValueError: # if chunk number is not a number
+            print('<server> Usage: register <filename> <num_chunks(int)>')
+
+        file_size = os.stat(file_name).st_size
+        chunk_size = math.ceil(file_size / num_chunks)
+        user_input = user_input + ' ' + str(chunk_size)
 
     client_socket.send(user_input.encode())
 
@@ -123,7 +133,7 @@ def login_client(client_socket):
     global my_name
     number_tries = 0
     user_name = input("Username: ")
-    while number_tries < 3: 
+    while number_tries < 3:
         password = input("Password: ")
         user_info = user_name + " " + password
         try:
@@ -146,7 +156,7 @@ def login_client(client_socket):
             print("Connection to server lost, please restart program")
             print("Shutting down ......")
             exit(1)
-        
+
         print(response)
         # handle response message from server
         if response == '<server> Welcome to ZYX chat\nretrieving offline messages...':
@@ -175,7 +185,7 @@ def login_client(client_socket):
 # Try to connect to client's p2p socket
 def start_private_connection(host,port,to_who):
     global peer_out_conns
-    global my_name 
+    global my_name
     sock = socket(AF_INET, SOCK_STREAM)
     sock.connect((host,int(port)))
     # record this socket
@@ -193,9 +203,9 @@ def client_setup(server_ip,server_port):
     global peer_out_conns
 
     # Create client socket, set to reuse address
-    client_socket = socket(AF_INET, SOCK_STREAM) 
+    client_socket = socket(AF_INET, SOCK_STREAM)
     client_socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-    
+
     # Connect to server
     client_socket.connect((server_ip, server_port))
 
@@ -203,7 +213,7 @@ def client_setup(server_ip,server_port):
     my_ip, my_port = client_socket.getsockname()
 
     # Create p2p socket, set to reuse address
-    p2p_socket = socket(AF_INET, SOCK_STREAM) 
+    p2p_socket = socket(AF_INET, SOCK_STREAM)
     p2p_socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
     # bind socket to its ip and port and listen
     p2p_socket.bind((my_ip,my_port))
@@ -235,7 +245,7 @@ def client_setup(server_ip,server_port):
                     print("Connection to server lost, please restart program")
                     print("Shutting down ......")
                     exit(1)
-                
+
                 # all message received will be in format "<sender> <message>"
                 from_who = message.split(" ")[0]
 
@@ -245,7 +255,7 @@ def client_setup(server_ip,server_port):
                     client_socket.close()
                     p2p_socket.close()
                     exit(1)
-                
+
                 # handle logout message sender by server
                 # update client's online status dictionary about this user
                 elif from_who == '<server>' and 'has logged out' in message:
@@ -257,7 +267,7 @@ def client_setup(server_ip,server_port):
                         print('<private> Private connection to <{}> has been shutted down'.format(who))
                         peer_out_conns[who].close()
                         del peer_out_conns[who]
-                      
+
                 # handle log on message from server
                 # update client's online status dictionary about this user
                 elif from_who == '<server>' and 'has just logged on' in message:
@@ -278,10 +288,10 @@ def client_setup(server_ip,server_port):
                     except error as e:
                         print(e)
 
-                # other normal messages just print                  
+                # other normal messages just print
                 else:
                     print (message)
-            
+
             elif sock == p2p_socket: # if socket is p2p socket
                 conn, addr = sock.accept() # accpet connection
                 try:
@@ -291,15 +301,15 @@ def client_setup(server_ip,server_port):
                 except RuntimeError:
                     conn.close()
                     conn.shutdown(SHUT_RDWR)
-                
+
                 # record this incoming connection to client
-                peer_in_conns[from_who] = conn 
+                peer_in_conns[from_who] = conn
                 incoming_addr.append(conn)
-            
-            elif sock == sys.stdin: # if socket is stdin, handle message typed in 
+
+            elif sock == sys.stdin: # if socket is stdin, handle message typed in
                 handle_send(client_socket)
 
-            else:   # this is some sockets connected to different clients 
+            else:   # this is some sockets connected to different clients
                 try:
                     message = sock.recv(1024).decode()
                     if message == '':
@@ -307,7 +317,7 @@ def client_setup(server_ip,server_port):
                 except RuntimeError:
                     sock.close()
                     incoming_addr.remove(sock)
-                    
+
                 if  message == '<private> Private connection to <{}> has been closed'.format(from_who):
                     sock.close()
                     incoming_addr.remove(sock)
@@ -322,7 +332,7 @@ if __name__ == "__main__" :
     if (len(sys.argv) != 3):
         print("Usage: {} server_IP server_port".format(sys.argv[0]))
         exit(1)
-    
+
     # get command line variables
     server_ip = sys.argv[1]
     server_port = int(sys.argv[2])
