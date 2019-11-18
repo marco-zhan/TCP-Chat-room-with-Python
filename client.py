@@ -191,7 +191,7 @@ def start_private_connection(host,port,to_who):
     # record this socket
     peer_out_conns[to_who] = sock
     # send to the target client my name for recording
-    sock.send(my_name.encode())
+    # sock.send(my_name.encode())
 
 # Pass in the server ip and server port to this function
 # Set up the client
@@ -281,12 +281,28 @@ def client_setup(server_ip,server_port):
                 elif from_who == '<server-P2P>':
                     host,port,to_who = message.split(" ")[1:]
                     online_status[to_who] = True
+                    if have_conn(to_who):
+                        print("<private> Private connection to <{}> has already been setup".format(to_who))
+                    else :
+                        try:
+                            start_private_connection(host,port,to_who)
+                            print("<private> Private connection to <{}> has been setup".format(to_who))
+                        except error as e:
+                            print(e)
 
-                    try:
-                        start_private_connection(host,port,to_who)
-                        print("<private> Private connection to <{}> has been setup".format(to_who))
-                    except error as e:
-                        print(e)
+                elif from_who == '<server-P2P-file>':
+                    host, port, to_who, file_name, chunk_num = message.split(" ")[1:]
+                    online_status[to_who] = True
+                    if not have_conn(to_who):
+                        try:
+                            start_private_connection(host,port,to_who)
+                            print("<private> Private connection to <{}> has been setup".format(to_who))
+                        except error as e:
+                            print(e)
+                    else:
+                        print("<private> Private connection to <{}> has already been setup".format(to_who))
+                    message = '<request> {} {}'.format(file_name, chunk_num).encode()
+                    peer_out_conns[to_who].send(message)
 
                 # other normal messages just print
                 else:
@@ -294,16 +310,15 @@ def client_setup(server_ip,server_port):
 
             elif sock == p2p_socket: # if socket is p2p socket
                 conn, addr = sock.accept() # accpet connection
-                try:
-                    from_who = conn.recv(2048).decode()
-                    if from_who == '':
-                        raise RuntimeError("Socket connection to peer lost")
-                except RuntimeError:
-                    conn.close()
-                    conn.shutdown(SHUT_RDWR)
+                # try:
+                #     from_who = conn.recv(2048).decode()
+                #     if from_who == '':
+                #         raise RuntimeError("Socket connection to peer lost")
+                # except RuntimeError:
+                #     conn.close()
+                #     conn.shutdown(SHUT_RDWR)
 
                 # record this incoming connection to client
-                peer_in_conns[from_who] = conn
                 incoming_addr.append(conn)
 
             elif sock == sys.stdin: # if socket is stdin, handle message typed in
