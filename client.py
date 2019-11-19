@@ -3,6 +3,7 @@ from socket import *
 import select
 import os
 import math
+import time
 
 incoming_addr = []
 peer_in_conns = {}
@@ -37,7 +38,7 @@ def close_conn(user_name):
 # Pass in a connection to this function
 # Get the name of user this connection belongs to
 def get_conn_name(conn):
-    global peer_in_conns
+    global peer_out_conns
     for key in peer_in_conns:
         if peer_in_conns[key] == conn:
             return key
@@ -314,6 +315,8 @@ def client_setup(server_ip,server_port):
                 # except RuntimeError:
                 #     conn.close()
                 #     conn.shutdown(SHUT_RDWR)
+                
+                # peer_in_conns[from_who] = conn
 
                 # record this incoming connection to client
                 incoming_addr.append(conn)
@@ -336,7 +339,7 @@ def client_setup(server_ip,server_port):
                     print(message)
 
                 elif message.split(" ")[0] == '<request>':
-                    sock.send("You request has been noted".encode())
+                    sock.send("IT ShOULD WORK".encode())
                 else:
                     # print message received from these p2p connections
                     print(message)
