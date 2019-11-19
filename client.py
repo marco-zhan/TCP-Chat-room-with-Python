@@ -293,11 +293,11 @@ def client_setup(server_ip,server_port):
                     if not have_conn(to_who):
                         try:
                             start_private_connection(host,port,to_who)
-                            print("<private> Private connection to <{}> has been setup".format(to_who))
+                            # print("<private> Private connection to <{}> has been setup".format(to_who))
                         except error as e:
                             print(e)
-                    else:
-                        print("<private> Private connection to <{}> has already been setup".format(to_who))
+                    # else:
+                        # print("<private> Private connection to <{}> has already been setup".format(to_who))
                     message = '<request> {} {}'.format(file_name, chunk_num)
                     peer_out_conns[to_who].send(message.encode())
 
@@ -335,6 +335,8 @@ def client_setup(server_ip,server_port):
                     incoming_addr.remove(sock)
                     print(message)
 
+                elif message.split(" ")[0] == '<request>':
+                    sock.send("You request has been noted".encode())
                 else:
                     # print message received from these p2p connections
                     print(message)
