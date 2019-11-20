@@ -170,8 +170,9 @@ def get_client_has_chunks(file_name):
                     for i in client_registered_chunk[key][inner_key]:
                         message = message + str(i) + ' '
                     message = message + ']'
+        if message == '[{}] is available, all online users who has some chunks of this file is shown below'.format(file_name):          
+            return '[{}] is available, but none of the users have this file is online'
         return message
-    return '[{}] is available, but none of the users have this file is online'
 
 def get_client_has_requested_chunks(file_name,requested_chunks):
     print(requested_chunks)
@@ -187,8 +188,9 @@ def get_client_has_requested_chunks(file_name,requested_chunks):
                         if i in requested_chunks:
                             message = message + str(i) + ' '
                     message = message + ']'
+        if message == '[{}] is available, all online users who has some chunks of this file is shown below'.format(file_name):          
+            return '[{}] is available, but none of the users have this file is online'
         return message
-    return '[{}] is available, but none of the users have this file is online'
 
 def get_client_list_has_chunks(file_name,chunk_num,my_name):
     l = [] 
