@@ -198,9 +198,18 @@ def handle_send_file(file_name,chunk_num,chunk_size,sock):
     fp = open(file_name, "r")
     fp.seek(chunk_num*chunk_size)
     chunk_content = "<file> {} ".format(file_name)
-    chunk_content = chunk_content + " " + fp.read(chunk_size)
+    chunk_content = chunk_content + fp.read(chunk_size)
     fp.close()
     sock.send(chunk_content.encode())
+
+def get_file_content(message_data):
+    content = ""
+    for i in range(2,len(message_data)):
+        if i == 2:
+            content = content + message_data[i]
+        else:
+            content = content + " " + message_data[i]
+    return content
     
 # Pass in the server ip and server port to this function
 # Set up the client
@@ -359,9 +368,7 @@ def client_setup(server_ip,server_port):
                     handle_send_file(file_name,chunk_num,chunk_size,sock)
                 
                 elif message_data[0] == '<file>':
-                    content = ""
-                    for i in range(2,len(message_data)):
-                        content = content + message_data[i]
+                    content = get_file_content(message_data)
                     file_name = message_data[1]
                     fp = open(file_name,"a+")
                     fp.write(content)
