@@ -190,7 +190,7 @@ def start_private_connection(host,port,to_who):
     # record this socket
     peer_out_conns[to_who] = sock
     # send to the target client my name for recording
-    # sock.send(my_name.encode())
+    sock.send(my_name.encode())
 
 # Pass in the server ip and server port to this function
 # Set up the client
@@ -308,15 +308,15 @@ def client_setup(server_ip,server_port):
 
             elif sock == p2p_socket: # if socket is p2p socket
                 conn, addr = sock.accept() # accpet connection
-                # try:
-                #     from_who = conn.recv(2048).decode()
-                #     if from_who == '':
-                #         raise RuntimeError("Socket connection to peer lost")
-                # except RuntimeError:
-                #     conn.close()
-                #     conn.shutdown(SHUT_RDWR)
-                
-                # peer_in_conns[from_who] = conn
+                try:
+                    from_who = conn.recv(2048).decode()
+                    if from_who == '':
+                        raise RuntimeError("Socket connection to peer lost")
+                except RuntimeError:
+                    conn.close()
+                    conn.shutdown(SHUT_RDWR)
+
+                peer_out_conns[from_who] = conn
 
                 # record this incoming connection to client
                 incoming_addr.append(conn)
@@ -339,7 +339,7 @@ def client_setup(server_ip,server_port):
                     print(message)
 
                 elif message.split(" ")[0] == '<request>':
-                    sock.send("IT ShOULD WORK".encode())
+                    print(sock)
                 else:
                     # print message received from these p2p connections
                     print(message)
