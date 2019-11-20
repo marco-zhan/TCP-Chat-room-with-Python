@@ -501,15 +501,17 @@ def receiver_handler(conn,received_message):
             send_message('server',sender,message)
             return
 
-        max_chunk = registered_file[file_name][1]
-        chunks = [0,1,2,3,4,5,6,7,8,9]
-        chunk_size = registered_file[file_name][0]
-
+        chunk_size, max_chunk = registered_file[file_name][0]
+        
         if automate_download:
+            chunks = []
+            for i in range(0,max_chunk):
+                chunks.append(i)
+
             for i in chunks:
                 client_list = get_client_list_has_chunks(file_name,i,sender) # this will return a list of users have this chunk
                 if len(client_list) == 0:
-                    message = 'Failed: File [{}] Chunk [{}], all users have this chunk is not online or has blocked you'.format(file_name,chunk_num)
+                    message = 'Failed: File [{}] Chunk [{}], all users have this chunk are not online or has blocked you'.format(file_name,chunk_num)
                     send_message('server',sender,message)
                 else:
                     host, port = get_user_conn(client_list[0]).getpeername() # get users host and port

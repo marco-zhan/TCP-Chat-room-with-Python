@@ -1,3 +1,11 @@
-this is text file for testing
-it contains no data
-hopefully it works
+The client should obtain the IP address and port number being
+used by the <user> from the server. If <user> has blocked A, then
+the server should not provide the IP address and port number and
+an appropriate error message should be displayed. If <user> is
+offline, invalid or self then appropriate error messages should be
+displayed. The client should try to establish a TCP connection to
+this IP address and port number combination. Once the
+connection is established, it requests the download of a <chunk>
+of a specific <filename>. An appropriate error message should be
+displayed if there does not exist an active p2p messaging session
+with <user>.
