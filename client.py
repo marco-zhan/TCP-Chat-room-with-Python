@@ -31,11 +31,15 @@ def close_conn(user_name):
     for key in peer_out_conns:
         if key == user_name:
             mesage = "<private> Private connection to <{}> has been closed".format(my_name)
-            peer_out_conns[key].send(mesage.encode())
+            try:
+                peer_out_conns[key].send(mesage.encode())
+            except OSError:
+                pass
+            incoming_addr.remove(peer_out_conns[key])
             peer_out_conns[key].close()
             k = key
     # delete client's out connections
-    incoming_addr.remove(peer_out_conns[k])
+   
     del peer_out_conns[k]
 
 # Pass in a connection to this function
