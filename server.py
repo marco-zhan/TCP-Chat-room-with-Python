@@ -481,13 +481,13 @@ def receiver_handler(conn,received_message):
     # 1. download <file_name> -- automate download a file
     # 2. download <file_name> <chunk_num> -- download specific chunk
     elif command == 'download':
-        automate_download = True
-        max_chunk = registered_file[file_name][1]
+        automate_download = True   
         if len(message_data) < 2 or len(message_data) > 3:
             send_message('server',sender,'Usage: download <file_name> or download <file_name> <chunk_number>')
             return
 
         file_name = message_data[1]
+        max_chunk = registered_file[file_name][1]
         if len(message_data) == 3: # if third argument provided, set automate download to False -- manual download
             chunk_num = message_data[2]
             automate_download = False
