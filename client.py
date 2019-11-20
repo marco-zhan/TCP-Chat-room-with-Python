@@ -197,8 +197,9 @@ def start_private_connection(host,port,to_who):
 def handle_send_file(file_name,chunk_num,chunk_size,sock):
     fp = open(file_name, "r")
     fp.seek(chunk_num*chunk_size)
-    chunk_content = "<file> "
+    chunk_content = "<file> {} ".format(file_name)
     chunk_content = chunk_content + fp.read(chunk_size)
+    fp.close()
     sock.send(chunk_content.encode())
     
 # Pass in the server ip and server port to this function
@@ -353,8 +354,19 @@ def client_setup(server_ip,server_port):
 
                 elif message_data[0] == '<request>':
                     file_name, chunk_num, chunk_size = message_data[1:]
+                    chunk_num = int(chunk_num)
+                    chunk_size = int(chunk_size)
                     handle_send_file(file_name,chunk_num,chunk_size,sock)
                     sock.send("Your request has been noted".encode())
+                
+                elif message_data[0] == '<file>':
+                    content = ""
+                    for i in range(2,len(message_data)):
+                        content = content + message_data[i]
+                    file_name = message_data[1]
+                    fp = open(file_name,"a+")
+                    fp.write(content)
+                    fp.close()
                 else:
                     # print message received from these p2p connections
                     print(message)
