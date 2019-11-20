@@ -365,6 +365,9 @@ def client_setup(server_ip,server_port):
                 except RuntimeError:
                     sock.close()
                     incoming_addr.remove(sock)
+                except OSError:
+                    sock.close()
+                    incoming_addr.remove(sock)
 
                 message_data = message.split(" ")
 
