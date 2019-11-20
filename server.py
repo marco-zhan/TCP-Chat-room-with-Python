@@ -198,7 +198,7 @@ def get_client_list_has_chunks(file_name,chunk_num,my_name):
     for key in client_registered_chunk:
         if key == file_name:
             for inner_key in client_registered_chunk[key]:
-                if user_online(inner_key) and inner_key != my_name:
+                if user_online(inner_key) and inner_key != my_name and not user_blocked(my_name,inner_key)
                     if chunk_num in client_registered_chunk[key][inner_key]:
                         l.append(inner_key)
             return l
@@ -468,7 +468,6 @@ def receiver_handler(conn,received_message):
             return
         requested_chunks = []
         max_chunk = registered_file[file_name][1]
-        registered_file[file_name] = [chunk_size,num_chunks]
         for i in range(2,len(message_data)):
             if int(message_data[i]) > max_chunk:
                 message = 'File [{}] does not have chunk [{}]'.format(file_name,message_data[i])
@@ -483,6 +482,7 @@ def receiver_handler(conn,received_message):
     # 2. download <file_name> <chunk_num> -- download specific chunk
     elif command == 'download':
         automate_download = True
+        max_chunk = registered_file[file_name][1]
         if len(message_data) < 2 or len(message_data) > 3:
             send_message('server',sender,'Usage: download <file_name> or download <file_name> <chunk_number>')
             return
@@ -508,7 +508,15 @@ def receiver_handler(conn,received_message):
                 send_message('server-P2P-file',sender,message)
                 time.sleep(1)
         else:
-            client_list = get_client_list_has_chunks(file_name,i,sender)
+            if chunk_num > max_chunk:
+                message = 'File [{}] does not have chunk [{}]'.format(file_name,chunk_num)
+                send_message('server',sender,message)
+                return
+            client_list = get_client_list_has_chunks(file_name,chunk_num,sender)
+            if len(client_list) == 0:
+                message = 'File [{}] Chunk [], all users have this chunk is not online or has blocked you'.format(file_name,chunk_num)
+                send_message('server',sender,message)
+                return
             host, port = get_user_conn(client_list[0]).getpeername() # get users host and port
             message = "{} {} {} {} {} {}".format(host,port,client_list[0],file_name,i,chunk_size)
             send_message('server-P2P-file',sender,message)
