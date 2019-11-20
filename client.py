@@ -267,6 +267,7 @@ def client_setup(server_ip,server_port):
                         print('<private> Private connection to <{}> has been shutted down'.format(who))
                         peer_out_conns[who].close()
                         del peer_out_conns[who]
+                        incoming_addr.pop(peer_out_conns[who])
 
                 # handle log on message from server
                 # update client's online status dictionary about this user
