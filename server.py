@@ -442,6 +442,31 @@ def receiver_handler(conn,received_message):
         message = 'File [{}] has been successfully registered'.format(file_name)
         send_message('server',sender,message)
     
+    # if command is registerChunk
+    # format: registerChunk <user_name> <filename> <chunk_num> 
+    elif command == 'registerChunk':
+        if len(message_data) != 4:
+            send_message('server',sender,'Usage: registerChunk <user_name> <filename> <chunk_num> ')
+            return
+        user_name, file_name, chunk_num = message_data[1:]
+        if not valid_user(user_name):
+            send_message('server',sender,'Invalid user specified')
+            return
+        
+        if not file_registered(file_name):
+            message = 'File [{}] has not yet been registered'.format(file_name)
+            send_message('server',sender,message)
+            return
+
+        try:
+            chunk_num = int(chunk_num)
+        except ValueError:
+            send_message('server',sender,'Usage: registerChunk <user_name> <filename> <chunk_num(int)>')
+            return
+
+        client_registered_chunk[file_name][user_name] = []
+        client_registered_chunk[file_name][user_name].append(chunk_num)
+    
     # if command is "searchFile"
     elif command == 'searchFile':
         if len(message_data) != 2:
