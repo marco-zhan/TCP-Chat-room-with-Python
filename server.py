@@ -465,16 +465,17 @@ def receiver_handler(conn,received_message):
             send_message('server',sender,'Usage: download <file_name>')
             return
         file_name = message_data[1]
+        
         if not file_registered(file_name):
             message = 'File [{}] has not yet been registered'.format(file_name)
             send_message('server',sender,message)
             return
         chunks = [0,1,2,3,4,5,6,7,8,9]
-        
+        chunk_size = registered_file[file_name][0]
         for i in chunks:
             l = get_client_list_has_chunks(file_name,i,sender)
             host, port = get_user_conn(l[0]).getpeername() # get users host and port
-            message = "{} {} {} {} {}".format(host,port,l[0],file_name,i)
+            message = "{} {} {} {} {} {}".format(host,port,l[0],file_name,i,chunk_size)
             send_message('server-P2P-file',sender,message)
             time.sleep(1)
         

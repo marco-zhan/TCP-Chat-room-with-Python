@@ -194,6 +194,13 @@ def start_private_connection(host,port,to_who):
     # send to the target client my name for recording
     sock.send(my_name.encode())
 
+def handle_send_file(file_name,chunk_num,chunk_size,sock):
+    fp = open(file_name, "r")
+    fp.seek(chunk_num*chunk_size)
+    chunk_content = "<file> "
+    chunk_content = chunk_content + fp.read(chunk_size)
+    sock.send(chunk_content.encode())
+    
 # Pass in the server ip and server port to this function
 # Set up the client
 def client_setup(server_ip,server_port):
@@ -292,7 +299,7 @@ def client_setup(server_ip,server_port):
                             print(e)
 
                 elif from_who == '<server-P2P-file>':
-                    host, port, to_who, file_name, chunk_num = message.split(" ")[1:]
+                    host, port, to_who, file_name, chunk_num, chunk_size = message.split(" ")[1:]
                     online_status[to_who] = True
                     if not have_conn(to_who):
                         try:
@@ -302,7 +309,7 @@ def client_setup(server_ip,server_port):
                             print(e)
                     # else:
                         # print("<private> Private connection to <{}> has already been setup".format(to_who))
-                    message = '<request> {} {}'.format(file_name, chunk_num)
+                    message = '<request> {} {} {}'.format(file_name, chunk_num, chunk_size)
                     peer_out_conns[to_who].send(message.encode())
 
                 # other normal messages just print
@@ -323,7 +330,7 @@ def client_setup(server_ip,server_port):
                 # record this incoming connection to client
                 incoming_addr.append(conn)
 
-                print("<{}> has setup a private connection with you".format(from_who))
+                print("<private> <{}> has setup a private connection with you".format(from_who))
 
             elif sock == sys.stdin: # if socket is stdin, handle message typed in
                 handle_send(client_socket)
@@ -337,12 +344,16 @@ def client_setup(server_ip,server_port):
                     sock.close()
                     incoming_addr.remove(sock)
 
+                message_data = message.split(" ")
+
                 if  message == '<private> Private connection to <{}> has been closed'.format(from_who):
                     sock.close()
                     incoming_addr.remove(sock)
                     print(message)
 
-                elif message.split(" ")[0] == '<request>':
+                elif message_data[0] == '<request>':
+                    file_name, chunk_num, chunk_size = message_data[1:]
+                    handle_send_file(file_name,chunk_num,chunk_size,sock)
                     sock.send("Your request has been noted".encode())
                 else:
                     # print message received from these p2p connections
