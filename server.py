@@ -466,6 +466,7 @@ def receiver_handler(conn,received_message):
 
         client_registered_chunk[file_name][user_name] = []
         client_registered_chunk[file_name][user_name].append(chunk_num)
+        send_message('server',sender,'Successfully registered {}'.format(chunk_num))
     
     # if command is "searchFile"
     elif command == 'searchFile':
