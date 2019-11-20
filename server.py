@@ -518,11 +518,11 @@ def receiver_handler(conn,received_message):
                 return
             client_list = get_client_list_has_chunks(file_name,chunk_num,sender)
             if len(client_list) == 0:
-                message = 'File [{}] Chunk [], all users have this chunk is not online or has blocked you'.format(file_name,chunk_num)
+                message = 'File [{}] Chunk [{}], all users have this chunk is not online or has blocked you'.format(file_name,chunk_num)
                 send_message('server',sender,message)
                 return
             host, port = get_user_conn(client_list[0]).getpeername() # get users host and port
-            message = "{} {} {} {} {} {}".format(host,port,client_list[0],file_name,i,chunk_size)
+            message = "{} {} {} {} {} {}".format(host,port,client_list[0],file_name,chunk_num,chunk_size)
             send_message('server-P2P-file',sender,message)
             time.sleep(1)
         
