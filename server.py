@@ -488,8 +488,12 @@ def receiver_handler(conn,received_message):
 
         file_name = message_data[1]
         max_chunk = registered_file[file_name][1]
-        if len(message_data) == 3: # if third argument provided, set automate download to False -- manual download
-            chunk_num = message_data[2]
+        if len(message_data) == 3: # if third argument provided, set automate download to False -- manual download  
+            try:
+                chunk_num = int(message_data[2])
+            except ValueError: # if time is not a number
+                send_message('server',sender,'Usage: download <file_name> <chunk_num(int)>')
+                return
             automate_download = False
       
         if not file_registered(file_name):
