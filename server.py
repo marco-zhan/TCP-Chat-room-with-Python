@@ -170,7 +170,7 @@ def get_client_has_chunks(file_name):
                     for i in client_registered_chunk[key][inner_key]:
                         message = message + str(i) + ' '
                     message = message + ']'
-            return message
+        return message
     return '[{}] is available, but none of the users have this file is online'
 
 def get_client_has_requested_chunks(file_name,requested_chunks):
@@ -187,7 +187,7 @@ def get_client_has_requested_chunks(file_name,requested_chunks):
                         if i in requested_chunks:
                             message = message + str(i) + ' '
                     message = message + ']'
-            return message
+        return message
     return '[{}] is available, but none of the users have this file is online'
 
 def get_client_list_has_chunks(file_name,chunk_num,my_name):
@@ -227,6 +227,11 @@ def get_user_conn(user_name):
     for key in client_conn:
         if key == user_name:
             return client_conn[key]
+
+# # Pass in a client_list and user_name
+# # This function will filter out client that has blocked this user or client in list is not online
+# def filter_client_list(client_list):
+
 
 # Pass in the user's connection and the message received from client
 # Do action accordingly
@@ -409,18 +414,23 @@ def receiver_handler(conn,received_message):
             send_message('server',sender, 'Server error, please try again')
     
     # if command is "register"
-    # format: register <filename> <number_of_chunks>
+    # format: register <filename> <number_of_chunks> <chunk_size>
     elif command == 'register':
         file_name, num_chunks, chunk_size = message_data[1:]
         try:
             num_chunks = int(num_chunks)
+            chunk_size = int(chunk_size)
         except ValueError: # if time is not a number
-            send_message('server',sender,'Usage: register <file_name> <num_chunks(int)>')
+            send_message('server',sender,'Usage: register <file_name> <num_chunks(int)> <chunk_size(int)>')
+            return
+        if num_chunks <= 0 or chunk_size <= 0:
+            send_message('server',sender,'number of chunks of chunk size cannot be 0')
             return
         if file_registered(file_name):
             message = 'File [{}] has already been registered'.format(file_name)
             send_message('server',sender,message)
             return
+
         registered_file[file_name] = [chunk_size,num_chunks]
         client_registered_chunk[file_name] = {}
         client_registered_chunk[file_name][sender] = []
@@ -460,22 +470,39 @@ def receiver_handler(conn,received_message):
         message = get_client_has_requested_chunks(file_name,requested_chunks)
         send_message('server',sender,message)
     
+    # if command is "download", two usages of this command
+    # 1. download <file_name> -- automate download a file
+    # 2. download <file_name> <chunk_num> -- download specific chunk
     elif command == 'download':
-        if len(message_data) != 2:
-            send_message('server',sender,'Usage: download <file_name>')
+        automate_download = True
+        if len(message_data) < 2 or len(message_data) > 3:
+            send_message('server',sender,'Usage: download <file_name> or download <file_name> <chunk_number>')
             return
+
         file_name = message_data[1]
-        
+        if len(message_data) == 3: # if third argument provided, set automate download to False -- manual download
+            chunk_num = message_data[2]
+            automate_download = False
+      
         if not file_registered(file_name):
             message = 'File [{}] has not yet been registered'.format(file_name)
             send_message('server',sender,message)
             return
+
         chunks = [0,1,2,3,4,5,6,7,8,9]
         chunk_size = registered_file[file_name][0]
-        for i in chunks:
-            l = get_client_list_has_chunks(file_name,i,sender)
-            host, port = get_user_conn(l[0]).getpeername() # get users host and port
-            message = "{} {} {} {} {} {}".format(host,port,l[0],file_name,i,chunk_size)
+
+        if automate_download:
+            for i in chunks:
+                client_list = get_client_list_has_chunks(file_name,i,sender) # this will return a list of users have this chunk
+                host, port = get_user_conn(client_list[0]).getpeername() # get users host and port
+                message = "{} {} {} {} {} {}".format(host,port,client_list[0],file_name,i,chunk_size)
+                send_message('server-P2P-file',sender,message)
+                time.sleep(1)
+        else:
+            client_list = get_client_list_has_chunks(file_name,i,sender)
+            host, port = get_user_conn(client_list[0]).getpeername() # get users host and port
+            message = "{} {} {} {} {} {}".format(host,port,client_list[0],file_name,i,chunk_size)
             send_message('server-P2P-file',sender,message)
             time.sleep(1)
         

@@ -112,17 +112,25 @@ def handle_send(client_socket):
         print("<private> Connection to <{}> has been closed".format(receiver))
         return
 
+    # if command is "register"
     elif command == 'register':
         if len(message_data) != 3:
             print("<server> Usage: register <filename> <num_chunks>")
             return
-        file_name, num_chunks = message_data[1:]
-        try:
+        file_name, num_chunks = message_data[1:] # get the file_name and number of chunks from register message
+        
+        try: # catch error if num_chunks is not a number
             num_chunks = int(num_chunks)
         except ValueError: # if chunk number is not a number
             print('<server> Usage: register <filename> <num_chunks(int)>')
+            return
 
-        file_size = os.stat(file_name).st_size
+        try:
+            file_size = os.stat(file_name).st_size
+        except FileNotFoundError:
+            print("<server> [{}] No such file or directory".format(file_name))
+            return
+    
         chunk_size = math.ceil(file_size / num_chunks)
         user_input = user_input + ' ' + str(chunk_size)
 
@@ -210,7 +218,7 @@ def get_file_content(message_data):
         else:
             content = content + " " + message_data[i]
     return content
-    
+
 # Pass in the server ip and server port to this function
 # Set up the client
 def client_setup(server_ip,server_port):
@@ -308,17 +316,17 @@ def client_setup(server_ip,server_port):
                         except error as e:
                             print(e)
 
+                # special p2p resposne message from server, it has a special tag from the server
+                # It has format '<server-P2P-file> user's_host user's_port' user_name file_user_requesting chunk_num and chunk_size
                 elif from_who == '<server-P2P-file>':
                     host, port, to_who, file_name, chunk_num, chunk_size = message.split(" ")[1:]
                     online_status[to_who] = True
-                    if not have_conn(to_who):
+                    if not have_conn(to_who): # set up a connection with this client no p2p connections between these two clients
                         try:
                             start_private_connection(host,port,to_who)
-                            # print("<private> Private connection to <{}> has been setup".format(to_who))
                         except error as e:
                             print(e)
-                    # else:
-                        # print("<private> Private connection to <{}> has already been setup".format(to_who))
+                    # send a requst message to this client, format: <request> file_name, chunk_number, chunk_size
                     message = '<request> {} {} {}'.format(file_name, chunk_num, chunk_size)
                     peer_out_conns[to_who].send(message.encode())
 
@@ -335,9 +343,9 @@ def client_setup(server_ip,server_port):
                 except RuntimeError:
                     conn.close()
                     conn.shutdown(SHUT_RDWR)
-
-                peer_out_conns[from_who] = conn
+                
                 # record this incoming connection to client
+                peer_out_conns[from_who] = conn
                 incoming_addr.append(conn)
 
                 print("<private> <{}> has setup a private connection with you".format(from_who))
