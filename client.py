@@ -33,13 +33,17 @@ def close_conn(user_name):
             mesage = "<private> Private connection to <{}> has been closed".format(my_name)
             try:
                 peer_out_conns[key].send(mesage.encode())
-            except OSError:
+            except OSError: # if sockek is already closed
                 pass
-            incoming_addr.remove(peer_out_conns[key])
+            
+            try:
+                incoming_addr.remove(peer_out_conns[key])
+            except ValueError: # if it is already deleted
+                pass
             peer_out_conns[key].close()
             k = key
+
     # delete client's out connections
-   
     del peer_out_conns[k]
 
 # Pass in a connection to this function
