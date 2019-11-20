@@ -383,6 +383,7 @@ def client_setup(server_ip,server_port):
                     content = get_file_content(message_data)
                     file_name, chunk_num, chunk_size = message_data[1:4]
                     fp = open(file_name,"a+")
+                    fp.seek(chunk_num*chunk_size)
                     fp.write(content)
                     fp.close()
                 else:
