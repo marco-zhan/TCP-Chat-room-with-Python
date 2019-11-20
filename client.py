@@ -208,7 +208,7 @@ def start_private_connection(host,port,to_who):
 def handle_send_file(file_name,chunk_num,chunk_size,sock):
     fp = open(file_name, "r")
     fp.seek(chunk_num*chunk_size)
-    chunk_content = "<file> {} {} {}".format(file_name,chunk_num,chunk_size)
+    chunk_content = "<file> {} {} {} ".format(file_name,chunk_num,chunk_size)
     chunk_content = chunk_content + fp.read(chunk_size)
     fp.close()
     sock.send(chunk_content.encode())
@@ -382,7 +382,10 @@ def client_setup(server_ip,server_port):
                 elif message_data[0] == '<file>':
                     content = get_file_content(message_data)
                     file_name, chunk_num, chunk_size = message_data[1:4]
-                    fp = open(file_name,"a+")
+                    chunk_num = int(chunk_num)
+                    chunk_size = int(chunk_size)
+
+                    fp = open(file_name,"r+")
                     fp.seek(chunk_num*chunk_size)
                     fp.write(content)
                     fp.close()

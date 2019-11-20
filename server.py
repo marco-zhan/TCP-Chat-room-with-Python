@@ -511,7 +511,7 @@ def receiver_handler(conn,received_message):
             for i in chunks:
                 client_list = get_client_list_has_chunks(file_name,i,sender) # this will return a list of users have this chunk
                 if len(client_list) == 0:
-                    message = 'Failed: File [{}] Chunk [{}], all users have this chunk are not online or has blocked you'.format(file_name,chunk_num)
+                    message = 'Failed: File [{}] Chunk [{}], all users have this chunk are not online or has blocked you'.format(file_name,i)
                     send_message('server',sender,message)
                 else:
                     host, port = get_user_conn(client_list[0]).getpeername() # get users host and port
