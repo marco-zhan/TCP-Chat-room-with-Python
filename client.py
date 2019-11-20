@@ -198,7 +198,7 @@ def handle_send_file(file_name,chunk_num,chunk_size,sock):
     fp = open(file_name, "r")
     fp.seek(chunk_num*chunk_size)
     chunk_content = "<file> {} ".format(file_name)
-    chunk_content = chunk_content + fp.read(chunk_size)
+    chunk_content = chunk_content + " " + fp.read(chunk_size)
     fp.close()
     sock.send(chunk_content.encode())
     
@@ -357,7 +357,6 @@ def client_setup(server_ip,server_port):
                     chunk_num = int(chunk_num)
                     chunk_size = int(chunk_size)
                     handle_send_file(file_name,chunk_num,chunk_size,sock)
-                    sock.send("Your request has been noted".encode())
                 
                 elif message_data[0] == '<file>':
                     content = ""
