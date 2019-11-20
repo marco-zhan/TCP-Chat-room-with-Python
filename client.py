@@ -25,7 +25,9 @@ def have_conn(user_name):
 def close_conn(user_name):
     global peer_out_conns
     global my_name
+    global incoming_addr
     k = None
+    
     for key in peer_out_conns:
         if key == user_name:
             mesage = "<private> Private connection to <{}> has been closed".format(my_name)
@@ -33,6 +35,7 @@ def close_conn(user_name):
             peer_out_conns[key].close()
             k = key
     # delete client's out connections
+    incoming_addr.remove(peer_out_conns[k])
     del peer_out_conns[k]
 
 # Pass in a connection to this function
