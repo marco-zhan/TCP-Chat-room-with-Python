@@ -319,9 +319,10 @@ def client_setup(server_ip,server_port):
                     conn.shutdown(SHUT_RDWR)
 
                 peer_out_conns[from_who] = conn
-
                 # record this incoming connection to client
                 incoming_addr.append(conn)
+
+                print("<{}> has setup a private connection with you".format(from_who))
 
             elif sock == sys.stdin: # if socket is stdin, handle message typed in
                 handle_send(client_socket)
