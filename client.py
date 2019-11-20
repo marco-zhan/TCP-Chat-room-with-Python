@@ -185,10 +185,12 @@ def login_client(client_socket):
 def start_private_connection(host,port,to_who):
     global peer_out_conns
     global my_name
+    global incoming_addr
     sock = socket(AF_INET, SOCK_STREAM)
     sock.connect((host,int(port)))
     # record this socket
     peer_out_conns[to_who] = sock
+    incoming_addr.append(sock)
     # send to the target client my name for recording
     sock.send(my_name.encode())
 
