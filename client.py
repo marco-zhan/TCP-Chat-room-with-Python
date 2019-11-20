@@ -293,9 +293,7 @@ def client_setup(server_ip,server_port):
                     print(message)
                     if have_conn(who):
                         print('<private> Private connection to <{}> has been shutted down'.format(who))
-                        peer_out_conns[who].close()
-                        incoming_addr.remove(peer_out_conns[who])
-                        del peer_out_conns[who]
+                        close_conn(who)
                         
                 # handle log on message from server
                 # update client's online status dictionary about this user
@@ -367,7 +365,6 @@ def client_setup(server_ip,server_port):
                     incoming_addr.remove(sock)
                 except OSError:
                     sock.close()
-                    incoming_addr.remove(sock)
 
                 message_data = message.split(" ")
 
