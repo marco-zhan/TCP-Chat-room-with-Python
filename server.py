@@ -467,7 +467,13 @@ def receiver_handler(conn,received_message):
             send_message('server',sender,message)
             return
         requested_chunks = []
+        max_chunk = registered_file[file_name][1]
+        registered_file[file_name] = [chunk_size,num_chunks]
         for i in range(2,len(message_data)):
+            if int(message_data[i]) > max_chunk:
+                message = 'File [{}] does not have chunk [{}]'.format(file_name,message_data[i])
+                send_message('server',sender,message)
+                return
             requested_chunks.append(int(message_data[i]))
         message = get_client_has_requested_chunks(file_name,requested_chunks)
         send_message('server',sender,message)
