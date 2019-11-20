@@ -266,9 +266,9 @@ def client_setup(server_ip,server_port):
                     if have_conn(who):
                         print('<private> Private connection to <{}> has been shutted down'.format(who))
                         peer_out_conns[who].close()
+                        incoming_addr.remove(peer_out_conns[who])
                         del peer_out_conns[who]
-                        incoming_addr.pop(peer_out_conns[who])
-
+                        
                 # handle log on message from server
                 # update client's online status dictionary about this user
                 elif from_who == '<server>' and 'has just logged on' in message:
@@ -343,7 +343,7 @@ def client_setup(server_ip,server_port):
                     print(message)
 
                 elif message.split(" ")[0] == '<request>':
-                    print(sock)
+                    sock.send("Your request has been noted".encode())
                 else:
                     # print message received from these p2p connections
                     print(message)
