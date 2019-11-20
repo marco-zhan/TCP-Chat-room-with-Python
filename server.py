@@ -198,7 +198,7 @@ def get_client_list_has_chunks(file_name,chunk_num,my_name):
     for key in client_registered_chunk:
         if key == file_name:
             for inner_key in client_registered_chunk[key]:
-                if user_online(inner_key) and inner_key != my_name and not user_blocked(my_name,inner_key)
+                if user_online(inner_key) and inner_key != my_name and not user_blocked(my_name,inner_key):
                     if chunk_num in client_registered_chunk[key][inner_key]:
                         l.append(inner_key)
             return l
