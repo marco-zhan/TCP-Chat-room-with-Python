@@ -27,7 +27,7 @@ def close_conn(user_name):
     global my_name
     global incoming_addr
     k = None
-    
+
     for key in peer_out_conns:
         if key == user_name:
             mesage = "<private> Private connection to <{}> has been closed".format(my_name)
@@ -208,15 +208,15 @@ def start_private_connection(host,port,to_who):
 def handle_send_file(file_name,chunk_num,chunk_size,sock):
     fp = open(file_name, "r")
     fp.seek(chunk_num*chunk_size)
-    chunk_content = "<file> {} ".format(file_name)
+    chunk_content = "<file> {} {} {}".format(file_name,chunk_num,chunk_size)
     chunk_content = chunk_content + fp.read(chunk_size)
     fp.close()
     sock.send(chunk_content.encode())
 
 def get_file_content(message_data):
     content = ""
-    for i in range(2,len(message_data)):
-        if i == 2:
+    for i in range(4,len(message_data)):
+        if i == 4:
             content = content + message_data[i]
         else:
             content = content + " " + message_data[i]
@@ -327,6 +327,7 @@ def client_setup(server_ip,server_port):
                     if not have_conn(to_who): # set up a connection with this client no p2p connections between these two clients
                         try:
                             start_private_connection(host,port,to_who)
+                            print("<private> Private connection to <{}> has been setup".format(to_who))
                         except error as e:
                             print(e)
                     # send a requst message to this client, format: <request> file_name, chunk_number, chunk_size
@@ -380,7 +381,7 @@ def client_setup(server_ip,server_port):
                 
                 elif message_data[0] == '<file>':
                     content = get_file_content(message_data)
-                    file_name = message_data[1]
+                    file_name, chunk_num, chunk_size = message_data[1:4]
                     fp = open(file_name,"a+")
                     fp.write(content)
                     fp.close()

@@ -501,8 +501,8 @@ def receiver_handler(conn,received_message):
             send_message('server',sender,message)
             return
 
-        chunk_size, max_chunk = registered_file[file_name][0]
-        
+        chunk_size, max_chunk = registered_file[file_name]
+ 
         if automate_download:
             chunks = []
             for i in range(0,max_chunk):
