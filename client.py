@@ -295,10 +295,10 @@ def client_setup(server_ip,server_port):
                 # handle logout message sender by server
                 # update client's online status dictionary about this user
                 elif from_who == '<server>' and 'has logged out' in message:
+                    print(message)
                     message_data = message.split(" ")
                     who = message_data[1] # this position is the user_name send from server
-                    online_status[who] = False
-                    print(message)
+                    online_status[who] = False  
                     if have_conn(who):
                         print('<private> Private connection to <{}> has been shutted down'.format(who))
                         close_conn(who)
