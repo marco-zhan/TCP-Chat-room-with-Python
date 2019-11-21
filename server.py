@@ -445,6 +445,7 @@ def receiver_handler(conn,received_message):
     # if command is registerChunk
     # format: registerChunk <user_name> <filename> <chunk_num> 
     elif command == 'registerChunk':
+        print(message_data)
         if len(message_data) != 4:
             send_message('server',sender,'Usage: registerChunk <user_name> <filename> <chunk_num> ')
             return
@@ -543,7 +544,7 @@ def receiver_handler(conn,received_message):
                     host, port = get_user_conn(client_list[0]).getpeername() # get users host and port
                     message = "{} {} {} {} {} {}".format(host,port,client_list[0],file_name,i,chunk_size)
                     send_message('server-P2P-file',sender,message)
-                    time.sleep(1)
+                    time.sleep(3)
 
         else:
             if chunk_num >= max_chunk:
