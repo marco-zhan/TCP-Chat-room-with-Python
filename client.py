@@ -392,6 +392,7 @@ def client_setup(server_ip,server_port):
                     handle_send_file(file_name,chunk_num,chunk_size,sock)
                 
                 elif message_data[0] == '<file>':
+                    time.sleep(5)
                     content = get_file_content(message_data)
                     file_name, chunk_num, chunk_size = message_data[1:4]
                     chunk_num = int(chunk_num)
