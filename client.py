@@ -122,6 +122,9 @@ def handle_send(client_socket):
         close_conn(receiver)
         print("<private> Connection to <{}> has been closed".format(receiver))
         return
+        
+    elif command == 'download':
+        print("Downloading ......")
 
     # if command is "register"
     elif command == 'register':
@@ -338,6 +341,7 @@ def client_setup(server_ip,server_port):
                         try:
                             start_private_connection(host,port,to_who)
                             print("<private> Private connection to <{}> has been setup".format(to_who))
+                            time.sleep(2)
                         except error as e:
                             print(e)
                     # send a requst message to this client, format: <request> file_name, chunk_number, chunk_size
