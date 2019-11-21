@@ -389,18 +389,21 @@ def client_setup(server_ip,server_port):
                     incoming_addr.remove(sock)
                     print(message)
 
+                # if private connection received a <request> message, send specific file content to user
                 elif message_data[0] == '<request>':
                     file_name, chunk_num, chunk_size = message_data[1:]
                     chunk_num = int(chunk_num)
                     chunk_size = int(chunk_size)
                     handle_send_file(file_name,chunk_num,chunk_size,sock)
                 
+                # if private connection received a <file> chunk, write this file to directory
                 elif message_data[0] == '<file>':
                     time.sleep(5)
                     content = get_file_content(message_data)
                     file_name, chunk_num, chunk_size = message_data[1:4]
                     chunk_num = int(chunk_num)
                     chunk_size = int(chunk_size)
+                    # if file does not exist
                     if not os.path.exists(file_name):
                         fp = open(file_name,"w")
                         fp.close()

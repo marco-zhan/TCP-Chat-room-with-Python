@@ -4,6 +4,7 @@ from socket import *
 import threading
 from datetime import datetime 
 import time
+import random
 
 client_conn = {} # dictionary records all clients connections in server, format: {user_name: user_conn}
 all_clients = {} # dictionary records all clients registered in server, format: {user_name: user_password}
@@ -543,8 +544,9 @@ def receiver_handler(conn,received_message):
                     message = 'Failed: File [{}] Chunk [{}], all users have this chunk are not online or has blocked you'.format(file_name,i)
                     send_message('server',sender,message)
                 else:
-                    host, port = get_user_conn(client_list[0]).getpeername() # get users host and port
-                    message = "{} {} {} {} {} {}".format(host,port,client_list[0],file_name,i,chunk_size)
+                    index = random.randint(0,len(client_list)-1)
+                    host, port = get_user_conn(client_list[index]).getpeername() # get users host and port
+                    message = "{} {} {} {} {} {}".format(host,port,client_list[index],file_name,i,chunk_size)
                     send_message('server-P2P-file',sender,message)
         else:
             if chunk_num >= max_chunk:
@@ -564,8 +566,9 @@ def receiver_handler(conn,received_message):
                 message = 'File [{}] Chunk [{}], all users have this chunk are not online or has blocked you'.format(file_name,chunk_num)
                 send_message('server',sender,message)
                 return
-            host, port = get_user_conn(client_list[0]).getpeername() # get users host and port
-            message = "{} {} {} {} {} {}".format(host,port,client_list[0],file_name,chunk_num,chunk_size)
+            index = random.randint(0,len(client_list)-1)
+            host, port = get_user_conn(client_list[index]).getpeername() # get users host and port
+            message = "{} {} {} {} {} {}".format(host,port,client_list[index],file_name,chunk_num,chunk_size)
             send_message('server-P2P-file',sender,message)
             time.sleep(5)
         
