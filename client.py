@@ -399,7 +399,6 @@ def client_setup(server_ip,server_port):
                     fp.close()
                     message = 'registerChunk {} {} {}'.format(my_name,file_name,chunk_num)
                     client_socket.send(message.encode())
-                    time.sleep(1)
 
                 else:
                     # print message received from these p2p connections
