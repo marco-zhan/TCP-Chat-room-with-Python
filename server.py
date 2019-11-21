@@ -174,6 +174,8 @@ def get_client_has_chunks(file_name):
             return '[{}] is available, but none of the users have this file is online'.format(file_name)
         return message
 
+# Pass in a file name and requested chunk
+# Return all the users' availability on these chunks
 def get_client_has_requested_chunks(file_name,requested_chunks):
     print(requested_chunks)
     message = '[{}] is available, all online users who has some chunks of this file is shown below'.format(file_name)
@@ -192,6 +194,8 @@ def get_client_has_requested_chunks(file_name,requested_chunks):
             return '[{}] is available, but none of the users have this file is online'.format(file_name)
         return message
 
+# Pass in a file name, chunk number and the user require this file
+# Return a list of all users excpet self, except not online nor blocked user has the file
 def get_client_list_has_chunks(file_name,chunk_num,my_name):
     l = [] 
     global client_registered_chunk
@@ -443,30 +447,33 @@ def receiver_handler(conn,received_message):
         send_message('server',sender,message)
     
     # if command is registerChunk
+    # This command is internally used, no error message will be print
     # format: registerChunk <user_name> <filename> <chunk_num> 
     elif command == 'registerChunk':
         if len(message_data) != 4:
-            send_message('server',sender,'Usage: registerChunk <user_name> <filename> <chunk_num> ')
             return
         user_name, file_name, chunk_num = message_data[1:]
         if not valid_user(user_name):
-            send_message('server',sender,'Invalid user specified')
             return
         
         if not file_registered(file_name):
-            message = 'File [{}] has not yet been registered'.format(file_name)
-            send_message('server',sender,message)
             return
 
         try:
             chunk_num = int(chunk_num)
         except ValueError:
-            send_message('server',sender,'Usage: registerChunk <user_name> <filename> <chunk_num(int)>')
             return
 
-        client_registered_chunk[file_name][user_name] = []
-        client_registered_chunk[file_name][user_name].append(chunk_num)
-        send_message('server',sender,'Successfully registered {}'.format(chunk_num))
+        try:
+            if not chunk_num in client_registered_chunk[file_name][user_name]:
+                client_registered_chunk[file_name][user_name].append(chunk_num)
+            else:
+                return
+        except KeyError:
+            client_registered_chunk[file_name][user_name] = []
+            client_registered_chunk[file_name][user_name].append(chunk_num)
+
+        send_message('server',sender,'Successfully registered [{}] Chunk {}'.format(file_name,chunk_num))
     
     # if command is "searchFile"
     elif command == 'searchFile':
@@ -528,13 +535,9 @@ def receiver_handler(conn,received_message):
             return
 
         chunk_size, max_chunk = registered_file[file_name]
- 
         if automate_download:
-            chunks = []
             for i in range(0,max_chunk):
-                chunks.append(i)
-
-            for i in chunks:
+                time.sleep(5)
                 client_list = get_client_list_has_chunks(file_name,i,sender) # this will return a list of users have this chunk
                 if len(client_list) == 0:
                     message = 'Failed: File [{}] Chunk [{}], all users have this chunk are not online or has blocked you'.format(file_name,i)
@@ -543,22 +546,28 @@ def receiver_handler(conn,received_message):
                     host, port = get_user_conn(client_list[0]).getpeername() # get users host and port
                     message = "{} {} {} {} {} {}".format(host,port,client_list[0],file_name,i,chunk_size)
                     send_message('server-P2P-file',sender,message)
-                    time.sleep(3)
-
         else:
             if chunk_num >= max_chunk:
                 message = 'File [{}] does not have chunk [{}]'.format(file_name,chunk_num)
                 send_message('server',sender,message)
                 return
+            try:
+                if chunk_num in client_registered_chunk[file_name][sender]: # avoid duplicate download
+                    message = 'File [{}] Chunk [{}], You already have this chunk'.format(file_name,chunk_num)
+                    send_message('server',sender,message)
+                    return
+            except KeyError:
+                pass
+
             client_list = get_client_list_has_chunks(file_name,chunk_num,sender)
             if len(client_list) == 0:
-                message = 'File [{}] Chunk [{}], all users have this chunk is not online or has blocked you'.format(file_name,chunk_num)
+                message = 'File [{}] Chunk [{}], all users have this chunk are not online or has blocked you'.format(file_name,chunk_num)
                 send_message('server',sender,message)
                 return
             host, port = get_user_conn(client_list[0]).getpeername() # get users host and port
             message = "{} {} {} {} {} {}".format(host,port,client_list[0],file_name,chunk_num,chunk_size)
             send_message('server-P2P-file',sender,message)
-            time.sleep(3)
+            time.sleep(5)
         
     # Wrong command format
     else:
@@ -669,7 +678,6 @@ def login_user(conn):
 def client_thread(conn):
     global time_out
     conn.settimeout(time_out) # Set a timeout for this connection
-    
     try:
         login_user(conn)
     except timeout: # if user timeout in login
@@ -735,7 +743,6 @@ def server_setup(server_port):
     while True:
         try:
             conn, addr = serverSocket.accept()
-            print("Connected with {}:{}".format(addr[0],str(addr[1])))
             c_thread = threading.Thread(target = client_thread, args = (conn,))
             c_thread.daemon = True
             c_thread.start()
