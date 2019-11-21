@@ -464,9 +464,13 @@ def receiver_handler(conn,received_message):
             send_message('server',sender,'Usage: registerChunk <user_name> <filename> <chunk_num(int)>')
             return
 
-        client_registered_chunk[file_name][user_name] = []
-        client_registered_chunk[file_name][user_name].append(chunk_num)
-        send_message('server',sender,'Successfully registered {}'.format(chunk_num))
+        try:
+            client_registered_chunk[file_name][user_name].append(chunk_num)
+        except KeyError:
+            client_registered_chunk[file_name][user_name] = []
+            client_registered_chunk[file_name][user_name].append(chunk_num)
+
+        send_message('server',sender,'Successfully registered [{}] Chunk {}'.format(file_name,chunk_num))
     
     # if command is "searchFile"
     elif command == 'searchFile':
