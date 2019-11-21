@@ -5,11 +5,10 @@ import os
 import math
 import time
 
-incoming_addr = []
-peer_in_conns = {}
-peer_out_conns = {}
-online_status = {}
-my_name = None
+incoming_addr = [] # a list of all incoming address to this client
+peer_out_conns = {} # an dictionary recording all outgoing connections for this client, format {username: conn}
+online_status = {} # an dictionary recording status of the clients 
+my_name = None # record my name
 
 # Pass in a user name to this function
 # Check if client has connection to this user
@@ -50,8 +49,8 @@ def close_conn(user_name):
 # Get the name of user this connection belongs to
 def get_conn_name(conn):
     global peer_out_conns
-    for key in peer_in_conns:
-        if peer_in_conns[key] == conn:
+    for key in peer_out_conns:
+        if peer_out_conns[key] == conn:
             return key
 
 # Pass in a message data string list
@@ -242,7 +241,6 @@ def get_file_content(message_data):
 def client_setup(server_ip,server_port):
     global incoming_addr
     global online_status
-    global peer_in_conns
     global peer_out_conns
 
     # Create client socket, set to reuse address
@@ -385,8 +383,11 @@ def client_setup(server_ip,server_port):
                 message_data = message.split(" ")
 
                 if  message == '<private> Private connection to <{}> has been closed'.format(from_who):
-                    sock.close()
                     incoming_addr.remove(sock)
+                    user_name = get_conn_name(sock)
+                    print(user_name)
+                    del peer_out_conns[user_name]
+                    sock.close()
                     print(message)
 
                 # if private connection received a <request> message, send specific file content to user

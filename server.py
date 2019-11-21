@@ -14,7 +14,7 @@ server_blocking = {} # dictionary records the server blocking status, format: {u
 client_login_history = {} # dictionary records client last login time, format: {user: last_time user logged in}
 offline_messages = {} # dictionary records all offline messages, format: {user: a list of [sender,message]}
 registered_file = {} # a dictionary of all registered file in server, format: {user: [chunk_size,numb_chunks]}
-client_registered_chunk = {} # dictionary records client's registered file chunks, format: {user: [file_name,[register_chunks]]}
+client_registered_chunk = {} # dictionary records client's registered file chunks, format: {filename: [user: [register_chunks]}
 time_out = 0    # global time_out variable
 block_period = 0 # global block_period
 
