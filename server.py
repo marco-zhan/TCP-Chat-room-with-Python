@@ -445,7 +445,6 @@ def receiver_handler(conn,received_message):
     # if command is registerChunk
     # format: registerChunk <user_name> <filename> <chunk_num> 
     elif command == 'registerChunk':
-        print(message_data)
         if len(message_data) != 4:
             send_message('server',sender,'Usage: registerChunk <user_name> <filename> <chunk_num> ')
             return
