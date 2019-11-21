@@ -370,6 +370,7 @@ def client_setup(server_ip,server_port):
                 handle_send(client_socket)
 
             else:   # this is some sockets connected to different clients
+                user_name = get_conn_name(sock)
                 try:
                     message = sock.recv(1024).decode()
                     if message == '':
@@ -382,9 +383,8 @@ def client_setup(server_ip,server_port):
 
                 message_data = message.split(" ")
 
-                if  message == '<private> Private connection to <{}> has been closed'.format(from_who):
+                if  message == '<private> Private connection to <{}> has been closed'.format(user_name):
                     incoming_addr.remove(sock)
-                    user_name = get_conn_name(sock)
                     print(user_name)
                     del peer_out_conns[user_name]
                     sock.close()
