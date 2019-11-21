@@ -136,6 +136,10 @@ def handle_send(client_socket):
             print('<server> Usage: register <filename> <num_chunks(int)>')
             return
 
+        if num_chunks == 0:
+            print('<server> Number of chunks cannot be 0')
+            return
+            
         try:
             file_size = os.stat(file_name).st_size
         except FileNotFoundError:
