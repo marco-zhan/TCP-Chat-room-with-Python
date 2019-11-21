@@ -558,7 +558,7 @@ def receiver_handler(conn,received_message):
             host, port = get_user_conn(client_list[0]).getpeername() # get users host and port
             message = "{} {} {} {} {} {}".format(host,port,client_list[0],file_name,chunk_num,chunk_size)
             send_message('server-P2P-file',sender,message)
-            time.sleep(1)
+            time.sleep(3)
         
     # Wrong command format
     else:
