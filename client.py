@@ -139,7 +139,7 @@ def handle_send(client_socket):
         if num_chunks == 0:
             print('<server> Number of chunks cannot be 0')
             return
-            
+
         try:
             file_size = os.stat(file_name).st_size
         except FileNotFoundError:
@@ -396,7 +396,9 @@ def client_setup(server_ip,server_port):
                     file_name, chunk_num, chunk_size = message_data[1:4]
                     chunk_num = int(chunk_num)
                     chunk_size = int(chunk_size)
-
+                    if not os.path.exists(file_name):
+                        fp = open(file_name,"w")
+                        fp.close()
                     fp = open(file_name,"r+")
                     fp.seek(chunk_num*chunk_size)
                     fp.write(content)
