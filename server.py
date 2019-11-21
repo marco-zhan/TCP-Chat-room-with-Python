@@ -467,6 +467,8 @@ def receiver_handler(conn,received_message):
         try:
             if not chunk_num in client_registered_chunk[file_name][user_name]:
                 client_registered_chunk[file_name][user_name].append(chunk_num)
+            else:
+                return
         except KeyError:
             client_registered_chunk[file_name][user_name] = []
             client_registered_chunk[file_name][user_name].append(chunk_num)
@@ -534,11 +536,8 @@ def receiver_handler(conn,received_message):
 
         chunk_size, max_chunk = registered_file[file_name]
         if automate_download:
-            chunks = []
             for i in range(0,max_chunk):
-                chunks.append(i)
-
-            for i in chunks:
+                time.sleep(5)
                 client_list = get_client_list_has_chunks(file_name,i,sender) # this will return a list of users have this chunk
                 if len(client_list) == 0:
                     message = 'Failed: File [{}] Chunk [{}], all users have this chunk are not online or has blocked you'.format(file_name,i)
@@ -547,8 +546,6 @@ def receiver_handler(conn,received_message):
                     host, port = get_user_conn(client_list[0]).getpeername() # get users host and port
                     message = "{} {} {} {} {} {}".format(host,port,client_list[0],file_name,i,chunk_size)
                     send_message('server-P2P-file',sender,message)
-                    time.sleep(3)
-
         else:
             if chunk_num >= max_chunk:
                 message = 'File [{}] does not have chunk [{}]'.format(file_name,chunk_num)
@@ -570,7 +567,7 @@ def receiver_handler(conn,received_message):
             host, port = get_user_conn(client_list[0]).getpeername() # get users host and port
             message = "{} {} {} {} {} {}".format(host,port,client_list[0],file_name,chunk_num,chunk_size)
             send_message('server-P2P-file',sender,message)
-            time.sleep(3)
+            time.sleep(5)
         
     # Wrong command format
     else:
@@ -681,7 +678,6 @@ def login_user(conn):
 def client_thread(conn):
     global time_out
     conn.settimeout(time_out) # Set a timeout for this connection
-    
     try:
         login_user(conn)
     except timeout: # if user timeout in login
@@ -747,7 +743,6 @@ def server_setup(server_port):
     while True:
         try:
             conn, addr = serverSocket.accept()
-            print("Connected with {}:{}".format(addr[0],str(addr[1])))
             c_thread = threading.Thread(target = client_thread, args = (conn,))
             c_thread.daemon = True
             c_thread.start()
