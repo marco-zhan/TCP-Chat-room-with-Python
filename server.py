@@ -733,13 +733,11 @@ def client_thread(conn):
         except OSError:
             pass
         
-       
-
 # setup the server, continuously listen 
 def server_setup(server_port):
     serverSocket = socket(AF_INET, SOCK_STREAM)
     serverSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-    serverSocket.bind(('192.168.0.9', server_port))
+    serverSocket.bind(('localhost', server_port))
     serverSocket.listen(1)
     get_all_clients()
 

@@ -8,7 +8,7 @@ import time
 incoming_addr = [] # a list of all incoming address to this client
 peer_out_conns = {} # an dictionary recording all outgoing connections for this client, format {username: conn}
 online_status = {} # an dictionary recording status of the clients 
-my_name = None # record my name
+my_name = None # record client's name
 
 # Pass in a user name to this function
 # Check if client has connection to this user
